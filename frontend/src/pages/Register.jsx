@@ -66,7 +66,7 @@ export default function Register() {
                 >
                   <p className="font-semibold capitalize text-gray-800">{r}</p>
                   <p className="text-xs text-gray-500 mt-1">
-                    {r === "admin" && "Full system control"}
+                    {r === "admin" && "Control"}
                     {r === "hod" && "Department management"}
                     {r === "teacher" && "Schedule & preferences"}
                     {r === "student" && "View timetable"}

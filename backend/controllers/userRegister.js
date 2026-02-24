@@ -1,4 +1,5 @@
 const RegisterModel = require("..//model/Register.model");
+const { registerValidation } = require("../validations/userValidation");
 
 //main function starts here we declare user register and create a arrow function
 const userRegister = async(req, res , next)=>{
@@ -21,12 +22,18 @@ const userRegister = async(req, res , next)=>{
     if (registerDataCheck){
        return res.json({status:"username already exists"});
     }
-        
+     
+    
+
+    const bcrypt = require("bcryptjs");
+    const salt = await bcrypt.genSalt(10)
+    const hashpassword = await bcrypt.hash(password , salt)
+   
     //step 4 now store data in mongoDb
     const registerModel = new RegisterModel({
        name:name,
        email:email,
-       password:password,
+       password:hashpassword,
        role:role,
     });
 
