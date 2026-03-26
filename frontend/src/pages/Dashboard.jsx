@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import api from "../services/api";
 import { Button, Input, Table, Tag } from "antd";
 import { SearchOutlined, PlusOutlined } from "@ant-design/icons";
 
@@ -52,6 +54,27 @@ const data = [
 ];
 
 export default function Dashboard() {
+
+  // ⭐ Protected API call (runs when page loads)
+  useEffect(() => {
+
+    const getProfile = async () => {
+      try {
+
+        // interceptor automatically adds token
+        const res = await api.get("/auth/profile");
+
+        console.log("Logged User:", res.data);
+
+      } catch (err) {
+        console.log("Unauthorized user");
+      }
+    };
+
+    getProfile();
+
+  }, []);
+
   return (
     <div>
 
@@ -97,7 +120,11 @@ export default function Dashboard() {
         </div>
 
         {/* TABLE */}
-        <Table columns={columns} dataSource={data} pagination={{ pageSize: 5 }} />
+        <Table
+          columns={columns}
+          dataSource={data}
+          pagination={{ pageSize: 5 }}
+        />
 
       </div>
 

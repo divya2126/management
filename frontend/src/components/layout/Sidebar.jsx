@@ -12,39 +12,49 @@ const { Sider } = Layout;
 export default function Sidebar({ collapsed }) {
   const location = useLocation();
 
+  // ⭐ NEW ANT DESIGN FORMAT
+  const items = [
+    {
+      key: "/dashboard",
+      icon: <DashboardOutlined />,
+      label: <Link to="/dashboard">Dashboard</Link>,
+    },
+    {
+      key: "/teachers",
+      icon: <TeamOutlined />,
+      label: <Link to="/teachers">Teachers</Link>,
+    },
+    {
+      key: "/student",
+      icon: <UserOutlined />,
+      label: <Link to="/student">Students</Link>, // fixed
+    },
+    {
+      key: "/timetable",
+      icon: <CalendarOutlined />,
+      label: <Link to="/timetable">Timetable</Link>,
+    },
+  ];
+
   return (
     <Sider
       collapsible
       collapsed={collapsed}
       width={230}
-      className="min-h-screen bg-white shadow-sm color-bg- blue"
+      style={{ background: "#406093" }}
+      className="min-h-screen bg-white shadow-sm"
       trigger={null}
     >
       <div className="text-xl font-bold text-center p-4">
-        {!collapsed ? "EduAdmin" : "EA"}
+        {!collapsed ? "Schedulify" : "SF"}
       </div>
 
       <Menu
         mode="inline"
         selectedKeys={[location.pathname]}
+        items={items}
         className="border-none"
-      >
-        <Menu.Item key="/dashboard" icon={<DashboardOutlined />}>
-          <Link to="/dashboard">Dashboard</Link>
-        </Menu.Item>
-
-        <Menu.Item key="/teachers" icon={<TeamOutlined />}>
-          <Link to="/teachers">Teachers</Link>
-        </Menu.Item>
-
-        <Menu.Item key="/students" icon={<UserOutlined />}>
-          <Link to="/student">Students</Link>
-        </Menu.Item>
-
-        <Menu.Item key="/timetable" icon={<CalendarOutlined />}>
-          Timetable
-        </Menu.Item>
-      </Menu>
+      />
     </Sider>
   );
 }

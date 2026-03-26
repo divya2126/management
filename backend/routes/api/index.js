@@ -1,8 +1,6 @@
-const App = require("express").Router()
-const LoginTeam = require("./LoginTeam.route")
-const UserTeam  = require ("./UserTeam.route")
-App.use()
+const router = require("express").Router();
+const teacherRoutes = require("./teacher.route");
+router.use("/auth", require("./auth.route"));
+router.use("/teachers", teacherRoutes);
 
-App.use("./LoginTeam" ,LoginTeam)
-App.use("./UserTeam", UserTeam)
-module.exports = App;
+module.exports = router;

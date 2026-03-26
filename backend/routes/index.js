@@ -1,8 +1,13 @@
-const Route = require("express").Router()
-const apiroutes = require("./api/index")
-Route.use("/api",apiroutes)
-Route.use("./api",(req , res , next ) => {
-          res.json("status not found")
-})
+const router = require("express").Router();
+const apiRoutes = require("./api");
 
-module.exports = Route;
+router.use("/api", apiRoutes);
+
+// 404 handler
+router.use("*", (req, res) => {
+  res.status(404).json({
+    message: "Route not found",
+  });
+});
+
+module.exports = router;

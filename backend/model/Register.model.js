@@ -1,27 +1,41 @@
-const {mongoose, schema} = require("mongoose");
+const mongoose = require("mongoose");
 
-const RegisterModel =new schema ({
-    name: {
-        type :String,
-        required: true,
-    } ,
-    
-    role:{
-        type:String,
-        required: true,
+const registerSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+  },
+
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+
+  password: {
+    type: String,
+    required: function () {
+      return this.provider === "local";
     },
-    
-    email: {
-        type:String ,
-        required:true,
-    },
-     
-    
-    password: {
-        type : String,
-        required : true,
-    }
+  },
 
-})
+  role: {
+    type: String,
+    enum: ["admin", "hod", "teacher", "student"],
+    default: "student",
+  },
 
-module.exports = mongoose.model("RegsiterModel",RegisterModel);
+  avatar: {
+    type: String,
+  },
+
+  provider: {
+    type: String,
+    enum: ["local", "google"],
+    default: "local",
+  },
+});
+
+const RegisterModel = mongoose.model("RegisterModel", registerSchema);
+
+module.exports = RegisterModel;
