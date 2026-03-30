@@ -8,6 +8,10 @@ import Dashboard from "../pages/Dashboard";
 import Teachers from "../pages/Teachers";
 import Student from "../pages/Student";
 import Timetable from "../pages/Timetable";
+import Departments from "../pages/Departments";
+import Courses from "../pages/Courses";
+import Subjects from "../pages/Subjects";
+import Rooms from "../pages/Rooms";
 import AdminLayout from "../layout/AdminLayout";
 import ProtectedRoute from "../app/ProtectedRoute";
 
@@ -30,9 +34,10 @@ const AppRoutes = () => {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/teachers" element={<Teachers />} />
             <Route path="/student" element={<Student />} />
-            {/* Adding the other links for completion based off the visual */}
-            <Route path="/classes" element={<div className="p-6">Classes coming soon</div>} />
-            <Route path="/subjects" element={<div className="p-6">Subjects coming soon</div>} />
+            <Route path="/departments" element={<Departments />} />
+            <Route path="/courses" element={<Courses />} />
+            <Route path="/subjects" element={<Subjects />} />
+            <Route path="/rooms" element={<Rooms />} />
           </Route>
 
           {/* Admin & Teacher Shared Routes */}

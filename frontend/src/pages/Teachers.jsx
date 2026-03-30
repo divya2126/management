@@ -19,7 +19,8 @@ import {
   UploadOutlined
 } from "@ant-design/icons";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 const { Option } = Select;
 
@@ -54,29 +55,20 @@ export default function Teachers() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
 
-  const [teachers, setTeachers] = useState([
-    {
-      key: 1,
-      name: "John Smith",
-      department: "Computer Science",
-      email: "john@college.edu",
-      status: "Active",
-    },
-    {
-      key: 2,
-      name: "Maria Lee",
-      department: "Mathematics",
-      email: "maria@college.edu",
-      status: "Active",
-    },
-    {
-      key: 3,
-      name: "David Kim",
-      department: "Physics",
-      email: "david@college.edu",
-      status: "On Leave",
-    },
-  ]);
+  const [teachers, setTeachers] = useState([]);
+
+  useEffect(() => {
+    fetchTeachers();
+  }, []);
+
+  const fetchTeachers = async () => {
+    try {
+      const { data } = await axios.get("http://localhost:5001/api/teachers");
+      setTeachers(data);
+    } catch (error) {
+      message.error("Failed to fetch teachers");
+    }
+  };
 
   const [form] = Form.useForm();
 
@@ -88,9 +80,14 @@ export default function Teachers() {
 
   /* DELETE TEACHER */
 
-  const deleteTeacher = (key) => {
-    setTeachers(teachers.filter((teacher) => teacher.key !== key));
-    message.success("Teacher deleted");
+  const deleteTeacher = async (id) => {
+    try {
+      await axios.delete(`http://localhost:5001/api/teachers/${id}`);
+      message.success("Teacher deleted");
+      fetchTeachers();
+    } catch (error) {
+      message.error("Failed to delete teacher");
+    }
   };
 
   /* TABLE COLUMNS */
@@ -138,7 +135,7 @@ export default function Teachers() {
           <Button
             danger
             icon={<DeleteOutlined />}
-            onClick={() => deleteTeacher(record.key)}
+            onClick={() => deleteTeacher(record._id)}
           >
             Delete
           </Button>
@@ -164,30 +161,28 @@ export default function Teachers() {
   /* ADD TEACHER */
 
   const handleOk = async () => {
-
     try {
-
       const values = await form.validateFields();
 
       const newTeacher = {
-        key: Date.now(),
         name: values.name,
         department: values.department,
         email: values.email,
         status: "Active",
       };
 
-      setTeachers((prev) => [...prev, newTeacher]);
-
+      await axios.post("http://localhost:5001/api/teachers", newTeacher);
       message.success("Teacher added successfully");
 
       form.resetFields();
       setIsModalOpen(false);
+      fetchTeachers();
 
     } catch (error) {
-
       console.log(error);
-
+      if (error?.response?.data?.message) {
+        message.error(error.response.data.message);
+      }
     }
   };
 
@@ -234,7 +229,7 @@ export default function Teachers() {
       <Table
         columns={columns}
         dataSource={filteredTeachers}
-        rowKey="key"
+        rowKey="_id"
         pagination={{ pageSize: 5 }}
       />
 

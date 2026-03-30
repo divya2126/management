@@ -1,21 +1,11 @@
-const moongoose = require('moongoose')
+const mongoose = require('mongoose');
 
-const teacherSchema = new moongoose.Schema({
-    name :{
-        type:String,
-        required:true,
-    },
+const teacherSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  department: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  profilePhoto: { type: String },
+  status: { type: String, enum: ["Active", "On Leave"], default: "Active" }
+}, { timestamps: true });
 
-    department:{
-        type:String,
-        required:true,
-    },
-
-    email:{
-        type:String,
-        required:true,
-        unique:true
-    }
-})
-
-const TeacherModel = moongoose.model('TeacherModel',teacherSchema)
+module.exports = mongoose.model('Teacher', teacherSchema);

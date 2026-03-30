@@ -41,9 +41,19 @@ export default function Sidebar({ collapsed }) {
       label: <Link to="/teachers">Teachers</Link>,
     },
     {
-      key: "/classes",
+      key: "/departments",
       icon: <AppstoreOutlined />,
-      label: <Link to="/classes">Classes</Link>,
+      label: <Link to="/departments">Departments</Link>,
+    },
+    {
+      key: "/courses",
+      icon: <BookOutlined />,
+      label: <Link to="/courses">Courses</Link>,
+    },
+    {
+      key: "/rooms",
+      icon: <CheckSquareOutlined />,
+      label: <Link to="/rooms">Rooms</Link>,
     },
     {
       key: "/subjects",
@@ -65,11 +75,7 @@ export default function Sidebar({ collapsed }) {
       icon: <CalendarOutlined />,
       label: <Link to="/timetable">Timetable</Link>,
     },
-    {
-      key: "/fee",
-      icon: <WalletOutlined />,
-      label: <Link to="/fee">Fee Management</Link>,
-    },
+    
     {
       key: "/settings",
       icon: <SettingOutlined />,
