@@ -4,7 +4,8 @@ const jwt = require("jsonwebtoken");
 
 const registerService = async (data) => {
 
-  const { name, email, password, role } = data;
+  const { name, password } = data;
+  const email = data.email?.toLowerCase();
 
   // check if user exists
   const existingUser = await RegisterModel.findOne({ email });
@@ -22,7 +23,7 @@ const registerService = async (data) => {
     name,
     email,
     password: hashedPassword,
-    role,
+    role: "student", // FORCE student role for public registration
   });
 
   // generate token
@@ -40,14 +41,29 @@ const registerService = async (data) => {
     token,
   };
 };
-const loginService = async (data) => {
 
-  const { email, password } = data;
+    const loginService = async (data) => {
 
-  const user = await RegisterModel.findOne({ email });
+  const { password } = data;
+  const email = data.email?.toLowerCase();
+
+  if (!email || !password) {
+    throw new Error("Email and password are required");
+  }
+
+  const user = await RegisterModel.findOne({ email }).select("+password");
 
   if (!user) {
     throw new Error("User not found");
+  }
+
+  // 🔥 Prevent Google users from normal login
+  if (user.provider === "google") {
+    throw new Error("Please login with Google");
+  }
+
+  if (!password) {
+    throw new Error("Password is required");
   }
 
   const isMatch = await bcrypt.compare(password, user.password);

@@ -6,6 +6,7 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser"); // ✅ NEW
 
 const apiRoutes = require("./routes/api");
 
@@ -19,6 +20,7 @@ app.use(cors({
 
 // Body parser
 app.use(express.json());
+app.use(cookieParser()); // ✅ IMPORTANT
 
 // Test route
 app.get("/", (req, res) => {

@@ -6,6 +6,7 @@ const authMiddleware = require("../../middleware/auth.middleware");
 const roleMiddleware = require("../../middleware/role.middleware");
 const userProfile = require("../../controllers/userProfile");
 const googleLogin = require("../../controllers/googleLogin");
+const teacherOnboard = require("../../controllers/teacherOnboard");
 
 // register
 router.post("/register", userRegister);
@@ -19,6 +20,12 @@ router.get("/profile", authMiddleware, userProfile);
 router.post("/google", googleLogin);
 
 // Admin only
+router.post(
+  "/onboard-teacher",
+  authMiddleware,
+  roleMiddleware("admin"),
+  teacherOnboard
+);
 router.get(
   "/admin-data",
   authMiddleware,

@@ -8,7 +8,6 @@ export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("student");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -23,7 +22,6 @@ export default function Register() {
           name,
           email,
           password,
-          role,
         }
       );
 
@@ -77,29 +75,7 @@ export default function Register() {
             />
           </div>
 
-          {/* Role */}
-          <div>
-            <label className="text-sm font-medium text-gray-700">
-              Select Role
-            </label>
 
-            <div className="grid grid-cols-2 gap-3 mt-2">
-              {["admin", "hod", "teacher", "student"].map((r) => (
-                <div
-                  key={r}
-                  onClick={() => setRole(r)}
-                  className={`cursor-pointer border rounded-lg p-3 text-sm transition
-                    ${
-                      role === r
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-300 hover:border-blue-300"
-                    }`}
-                >
-                  <p className="font-semibold capitalize">{r}</p>
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* Email */}
           <div>

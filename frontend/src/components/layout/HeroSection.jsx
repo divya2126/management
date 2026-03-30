@@ -2,16 +2,13 @@ import { CalendarDays, Users, BookOpen, Clock } from "lucide-react";
 
 const HeroSection = () => {
   return (
-    <section className="relative min-h-screen flex items-center text-white pt-20 bg-gradient-to-r from-[#1e3a8a] via-[#2563eb] to-[#14b8a6]">
-
+    <section id="home" className="relative min-h-screen flex items-center text-white pt-20 bg-gradient-to-r from-[#1e3a8a] via-[#2563eb] to-[#14b8a6]">
       {/* GRID OVERLAY */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:40px_40px]" />
 
       <div className="relative container mx-auto px-6">
-
         {/* TOP CONTENT */}
         <div className="text-center max-w-3xl mx-auto">
-
           <span className="bg-white/10 px-4 py-2 rounded-full text-sm">
             Smart Scheduling for Colleges
           </span>
@@ -28,11 +25,11 @@ const HeroSection = () => {
 
           {/* BUTTONS */}
           <div className="flex justify-center gap-4 mt-8">
-            <button className="bg-teal-400 px-6 py-3 rounded-xl font-semibold">
+            <button className="bg-teal-400 px-6 py-3 rounded-xl font-semibold cursor-pointer hover:bg-teal-500 transition duration-300">
               Get Started
             </button>
 
-            <button className="border border-white px-6 py-3 rounded-xl font-semibold">
+            <button className="border border-white px-6 py-3 rounded-xl font-semibold cursor-pointer hover:bg-green-200 hover:text-black transition duration-300">
               View Demo
             </button>
           </div>
@@ -56,7 +53,6 @@ const HeroSection = () => {
             </div>
           ))}
         </div>
-
       </div>
     </section>
   );

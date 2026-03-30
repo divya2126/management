@@ -2,22 +2,21 @@ import { Button, Checkbox, Form, Input, Card, message, Divider } from "antd";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  // ========================
-  // Normal Email Login
-  // ========================
   const onFinish = async (values) => {
-    console.log("Recieved values:", values);
     try {
       const res = await axios.post(
         "http://localhost:5001/api/auth/login",
         values,
       );
 
-      localStorage.setItem("token", res.data.token);
+      // Use Context login to update state instantly
+      login(res.data.token, res.data.user);
 
       message.success("Login successful 🚀");
 
@@ -27,9 +26,6 @@ export default function Login() {
     }
   };
 
-  // ========================
-  // Google Login
-  // ========================
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
@@ -37,7 +33,8 @@ export default function Login() {
           access_token: tokenResponse.access_token,
         });
 
-        localStorage.setItem("token", res.data.token);
+        // Use Context login to update state instantly
+        login(res.data.token, res.data.user);
 
         message.success("Google Login Successful 🚀");
 
@@ -54,9 +51,15 @@ export default function Login() {
   });
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <Card className="w-full max-w-md shadow-xl rounded-2xl">
-        <h1 className="text-2xl font-bold text-center mb-6">Welcome Back</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-[#4C8CE4] to-teal-400">
+      <Card className="w-full max-w-md shadow-2xl rounded-2xl backdrop-blur-md bg-white/90 border border-white/20">
+        <h1 className="text-lg font-bold text-center mb-2 bg-gradient-to-r from-[#4C8CE4] to-teal-400 bg-clip-text text-transparent text-sm">
+          Welcome Back to Schedulify
+        </h1>
+
+        <p className="text-center text-gray-500 text-sm mb-6">
+          Manage your timetable smarter and faster
+        </p>
 
         {/* EMAIL LOGIN */}
         <Form layout="vertical" onFinish={onFinish}>
@@ -65,7 +68,10 @@ export default function Login() {
             name="email"
             rules={[{ required: true, message: "Please enter email" }]}
           >
-            <Input size="large" />
+            <Input
+              size="large"
+              className="rounded-lg focus:!border-[#4C8CE4] hover:!border-[#4C8CE4]"
+            />
           </Form.Item>
 
           <Form.Item
@@ -73,30 +79,33 @@ export default function Login() {
             name="password"
             rules={[{ required: true, message: "Please enter password" }]}
           >
-            <Input.Password size="large" />
+            <Input.Password
+              size="large"
+              className="rounded-lg focus:!border-[#4C8CE4] hover:!border-[#4C8CE4]"
+            />
           </Form.Item>
 
           <Form.Item>
-            <Checkbox>Remember me</Checkbox>
+            <Checkbox className="text-gray-600">Remember me</Checkbox>
           </Form.Item>
 
           <Button
             type="primary"
             htmlType="submit"
             size="large"
-            className="w-full"
+            className="w-full rounded-lg bg-[#4C8CE4] hover:!bg-[#3b74c7] border-none shadow-md"
           >
             Login
           </Button>
         </Form>
 
-        <Divider>OR</Divider>
+        <Divider className="text-gray-400">OR</Divider>
 
         {/* GOOGLE LOGIN */}
         <Button
           onClick={() => googleLogin()}
           size="large"
-          className="w-full flex items-center justify-center gap-2"
+          className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-300 hover:bg-white/10 transition"
         >
           <img
             src="https://www.svgrepo.com/show/475656/google-color.svg"
