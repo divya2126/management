@@ -10,7 +10,7 @@ import {
   Space,
   Upload
 } from "antd";
-import { SearchOutlined, PlusOutlined, DeleteOutlined, UploadOutlined } from "@ant-design/icons";
+import { SearchOutlined, PlusOutlined, DeleteOutlined, UploadOutlined, EditOutlined } from "@ant-design/icons";
 import { useState, useEffect } from "react";
 import axios from "axios";
 
@@ -83,6 +83,9 @@ export default function Student() {
       title: "Action",
       render: (_, record) => (
         <Space>
+          <Button type="primary" icon={<EditOutlined />}>
+            Edit
+          </Button>
           <Button danger icon={<DeleteOutlined />} onClick={() => deleteStudent(record._id)}>
             Delete
           </Button>

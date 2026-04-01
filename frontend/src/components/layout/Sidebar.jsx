@@ -14,6 +14,7 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
+
 const { Sider } = Layout;
 
 export default function Sidebar({ collapsed }) {
@@ -131,10 +132,17 @@ export default function Sidebar({ collapsed }) {
       className="min-h-screen shadow-lg"
       trigger={null}
     >
-      <div className="text-xl font-bold text-center p-4 text-white tracking-wide border-b border-white/10">
-        {!collapsed ? "Schedulify" : "SF"}
-      </div>
-
+  <div className="p-4 border-b border-white/10 flex items-center justify-center">
+  {!collapsed ? (
+    <img
+      src="/logoS.png"
+      alt="Schedulify"
+      className="h-12 object-contain"
+    />
+  ) : (
+    <span className="text-white font-bold text-lg">SF</span>
+  )}
+</div>
       <Menu
         theme="dark"
         mode="inline"

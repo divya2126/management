@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Table, Button, Modal, Form, Input, InputNumber, Select, message, Popconfirm, Tag } from "antd";
-import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
+import { PlusOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import api from "../services/api";
 
 const { Option } = Select;
@@ -86,9 +86,12 @@ export default function Rooms() {
       key: "action",
       width: 100,
       render: (_, record) => (
-        <Popconfirm title="Delete this room?" onConfirm={() => handleDelete(record._id)}>
-          <Button danger icon={<DeleteOutlined />} size="small" />
-        </Popconfirm>
+        <div className="flex gap-2">
+          <Button type="primary" icon={<EditOutlined />} size="small" />
+          <Popconfirm title="Delete this room?" onConfirm={() => handleDelete(record._id)}>
+            <Button danger icon={<DeleteOutlined />} size="small" />
+          </Popconfirm>
+        </div>
       ),
     },
   ];

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Table, Button, Modal, Form, Input, message, Popconfirm } from "antd";
-import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
+import { PlusOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import api from "../services/api";
 
 export default function Departments() {
@@ -56,9 +56,12 @@ export default function Departments() {
       key: "action",
       width: 100,
       render: (_, record) => (
-        <Popconfirm title="Delete this department?" onConfirm={() => handleDelete(record._id)}>
-          <Button danger icon={<DeleteOutlined />} size="small" />
-        </Popconfirm>
+        <div className="flex gap-2">
+          <Button type="primary" icon={<EditOutlined />} size="small" />
+          <Popconfirm title="Delete this department?" onConfirm={() => handleDelete(record._id)}>
+            <Button danger icon={<DeleteOutlined />} size="small" />
+          </Popconfirm>
+        </div>
       ),
     },
   ];

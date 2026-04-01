@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Table, Button, Modal, Form, Input, InputNumber, Select, message, Popconfirm } from "antd";
-import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
+import { PlusOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import api from "../services/api";
 
 const { Option } = Select;
@@ -64,9 +64,12 @@ export default function Courses() {
       key: "action",
       width: 100,
       render: (_, record) => (
-        <Popconfirm title="Delete this course?" onConfirm={() => handleDelete(record._id)}>
-          <Button danger icon={<DeleteOutlined />} size="small" />
-        </Popconfirm>
+        <div className="flex gap-2">
+          <Button type="primary" icon={<EditOutlined />} size="small" />
+          <Popconfirm title="Delete this course?" onConfirm={() => handleDelete(record._id)}>
+            <Button danger icon={<DeleteOutlined />} size="small" />
+          </Popconfirm>
+        </div>
       ),
     },
   ];
@@ -75,7 +78,7 @@ export default function Courses() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Courses / Programs</h1>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Courses </h1>
           <p className="text-gray-500 mt-1">Manage academic programs (e.g., B.Tech, MBA)</p>
         </div>
         <Button type="primary" size="large" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
