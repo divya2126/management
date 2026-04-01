@@ -105,14 +105,27 @@ export default function Login() {
         <Button
           onClick={() => googleLogin()}
           size="large"
-          className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-300 hover:bg-white/10 transition"
+          className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition mb-6"
         >
           <img
             src="https://www.svgrepo.com/show/475656/google-color.svg"
             width="18"
+            alt="Google Logo"
           />
           Continue with Google
         </Button>
+
+        {/* GO TO REGISTER */}
+        <div className="text-center mt-6">
+          <span className="text-gray-500 text-sm">Don't have an account? </span>
+          <button
+            type="button"
+            onClick={() => navigate('/register')}
+            className="text-[#4C8CE4] font-semibold hover:text-teal-500 transition-colors duration-300 text-sm cursor-pointer"
+          >
+            Register Here
+          </button>
+        </div>
       </Card>
     </div>
   );

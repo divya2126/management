@@ -36,10 +36,33 @@ mongoose
   .then(() => console.log("✅ MongoDB Connected"))
   .catch(err => console.error("❌ Mongo Error:", err));
 
-// Server
+const http = require("http");
+const { Server } = require("socket.io");
+
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: ["http://localhost:5173", "http://localhost:5174"],
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
+
+// Make io accessible in controllers
+app.set("io", io);
+
+io.on("connection", (socket) => {
+  console.log("🟢 A user connected:", socket.id);
+  
+  socket.on("disconnect", () => {
+    console.log("🔴 User disconnected:", socket.id);
+  });
+});
+
 const PORT = process.env.PORT || 5001;
 
-app.listen(PORT, () => {
-  console.log(`🚀 System Architecture Updated. Restarting...`);
+server.listen(PORT, () => {
+  console.log(`🚀 System Architecture Updated. Modular roles initialized!`);
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });

@@ -31,25 +31,30 @@ const AppRoutes = () => {
           
           {/* Admin Only Routes */}
           <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/teachers" element={<Teachers />} />
-            <Route path="/student" element={<Student />} />
             <Route path="/departments" element={<Departments />} />
             <Route path="/courses" element={<Courses />} />
             <Route path="/subjects" element={<Subjects />} />
             <Route path="/rooms" element={<Rooms />} />
           </Route>
 
-          {/* Admin & Teacher Shared Routes */}
-          <Route element={<ProtectedRoute allowedRoles={["admin", "teacher"]} />}>
+          {/* Admin & HOD Admin Routes */}
+          <Route element={<ProtectedRoute allowedRoles={["admin", "hod"]} />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/teachers" element={<Teachers />} />
+            <Route path="/student" element={<Student />} />
+          </Route>
+
+          {/* Admin, HOD, & Teacher Shared Routes */}
+          <Route element={<ProtectedRoute allowedRoles={["admin", "hod", "teacher"]} />}>
             <Route path="/modules" element={<div>Modules feature coming soon</div>} />
             <Route path="/attendance" element={<div>Attendance tracking coming soon</div>} />
             <Route path="/exams" element={<div>Exams coming soon</div>} />
           </Route>
 
           {/* Shared by Everyone */}
-          <Route element={<ProtectedRoute allowedRoles={["admin", "teacher", "student"]} />}>
+          <Route element={<ProtectedRoute allowedRoles={["admin", "hod", "teacher", "student"]} />}>
             <Route path="/timetable" element={<Timetable />} />
+            <Route path="/notifications" element={<div>Notifications coming soon</div>} />
           </Route>
 
         </Route>

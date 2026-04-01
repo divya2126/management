@@ -168,11 +168,12 @@ export default function Teachers() {
         name: values.name,
         department: values.department,
         email: values.email,
+        role: values.role, // Added role
         status: "Active",
       };
 
       await axios.post("http://localhost:5001/api/teachers", newTeacher);
-      message.success("Teacher added successfully");
+      message.success("Teacher/HOD added successfully. They can login with default password 'Teacher@123'");
 
       form.resetFields();
       setIsModalOpen(false);
@@ -190,11 +191,11 @@ export default function Teachers() {
     <div style={{ padding: "20px" }}>
 
       <h1 style={{ fontSize: "28px", fontWeight: "bold" }}>
-        Teachers
+        Staff Management
       </h1>
 
       <p style={{ color: "gray", marginBottom: "20px" }}>
-        Manage all teachers and departments
+        Add and manage Professors and HODs
       </p>
 
       {/* SEARCH + ADD BUTTON */}
@@ -209,7 +210,7 @@ export default function Teachers() {
 
         <Input
           prefix={<SearchOutlined />}
-          placeholder="Search teachers..."
+          placeholder="Search staff..."
           style={{ width: "250px" }}
           onChange={(e) => setSearchText(e.target.value)}
         />
@@ -219,7 +220,7 @@ export default function Teachers() {
           icon={<PlusOutlined />}
           onClick={showModal}
         >
-          Add Teacher
+          Add Staff Member
         </Button>
 
       </div>
@@ -236,11 +237,11 @@ export default function Teachers() {
       {/* ADD TEACHER MODAL */}
 
       <Modal
-        title="Add Teacher"
+        title="Add Staff Member"
         open={isModalOpen}
         onOk={handleOk}
         onCancel={handleCancel}
-        okText="Save"
+        okText="Auto-Create Login"
       >
 
         <Form form={form} layout="vertical">
@@ -263,10 +264,23 @@ export default function Teachers() {
             name="name"
             label="Full Name"
             rules={[
-              { required: true, message: "Please enter teacher name" }
+              { required: true, message: "Please enter staff name" }
             ]}
           >
             <Input placeholder="Enter full name" />
+          </Form.Item>
+
+          <Form.Item
+            name="role"
+            label="Hierarchy Role"
+            rules={[
+              { required: true, message: "Please select their system role" }
+            ]}
+          >
+            <Select placeholder="Select role">
+              <Option value="teacher">Professor</Option>
+              <Option value="hod">HOD (Head of Department)</Option>
+            </Select>
           </Form.Item>
 
           <Form.Item

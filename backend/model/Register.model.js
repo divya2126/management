@@ -1,14 +1,16 @@
 const mongoose = require("mongoose");
 const registerSchema = new mongoose.Schema({
-  
-  name: { 
-    type: String, 
-    required: true },
 
-  email: { 
-    type: String, 
+  name: {
+    type: String,
+    required: true
+  },
+
+  email: {
+    type: String,
     required: true,
-     unique: true },
+    unique: true
+  },
 
 
   password: {
@@ -22,13 +24,15 @@ const registerSchema = new mongoose.Schema({
     enum: ["admin", "hod", "teacher", "student"],
     default: "student",
   },
-  avatar: { 
+  avatar: {
     type: String
-   },
-  
-   provider: { type: String,
-     enum: ["local", "google"],
-      default: "local" },
+  },
+
+  provider: {
+    type: String,
+    enum: ["local", "google"],
+    default: "local"
+  },
 });
 const RegisterModel = mongoose.model("RegisterModel", registerSchema);
 

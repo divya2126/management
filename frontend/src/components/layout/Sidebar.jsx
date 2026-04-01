@@ -8,8 +8,8 @@ import {
   CheckSquareOutlined,
   ProfileOutlined,
   SettingOutlined,
-  WalletOutlined,
   AppstoreOutlined,
+  BellOutlined,
 } from "@ant-design/icons";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -39,7 +39,7 @@ export default function Sidebar({ collapsed }) {
     {
       key: "/teachers",
       icon: <TeamOutlined />,
-      label: <Link to="/teachers">Teachers</Link>,
+      label: <Link to="/teachers">Professors</Link>,
     },
     {
       key: "/departments",
@@ -76,7 +76,6 @@ export default function Sidebar({ collapsed }) {
       icon: <CalendarOutlined />,
       label: <Link to="/timetable">Timetable</Link>,
     },
-    
     {
       key: "/settings",
       icon: <SettingOutlined />,
@@ -84,12 +83,36 @@ export default function Sidebar({ collapsed }) {
     },
   ];
 
-  // Teacher Items
+  // HOD Items
+  const hodItems = [
+    {
+      key: "/dashboard",
+      icon: <DashboardOutlined />,
+      label: <Link to="/dashboard">Dashboard</Link>,
+    },
+    {
+      key: "/student",
+      icon: <UserOutlined />,
+      label: <Link to="/student">Students</Link>,
+    },
+    {
+      key: "/teachers",
+      icon: <TeamOutlined />,
+      label: <Link to="/teachers">Assign Professors</Link>,
+    },
+    {
+      key: "/timetable",
+      icon: <CalendarOutlined />,
+      label: <Link to="/timetable">Manage Timetable</Link>,
+    },
+  ];
+
+  // Teacher (Professor) Items
   const teacherItems = [
     {
-      key: "/modules",
-      icon: <BookOutlined />,
-      label: <Link to="/modules">My Modules</Link>,
+      key: "/timetable",
+      icon: <CalendarOutlined />,
+      label: <Link to="/timetable">My Schedule</Link>,
     },
     {
       key: "/attendance",
@@ -97,14 +120,9 @@ export default function Sidebar({ collapsed }) {
       label: <Link to="/attendance">Attendance</Link>,
     },
     {
-      key: "/exams",
-      icon: <ProfileOutlined />,
-      label: <Link to="/exams">Exams</Link>,
-    },
-    {
-      key: "/timetable",
-      icon: <CalendarOutlined />,
-      label: <Link to="/timetable">My Schedule</Link>,
+      key: "/notifications",
+      icon: <BellOutlined />,
+      label: <Link to="/notifications">Send Notification</Link>,
     },
   ];
 
@@ -115,11 +133,22 @@ export default function Sidebar({ collapsed }) {
       icon: <CalendarOutlined />,
       label: <Link to="/timetable">My Timetable</Link>,
     },
+    {
+      key: "/attendance",
+      icon: <CheckSquareOutlined />,
+      label: <Link to="/attendance">My Attendance</Link>,
+    },
+    {
+      key: "/notifications",
+      icon: <BellOutlined />,
+      label: <Link to="/notifications">Notifications</Link>,
+    },
   ];
 
   // Pick correct items
   let items = baseItems;
   if (user?.role === "admin") items = adminItems;
+  if (user?.role === "hod") items = hodItems;
   if (user?.role === "teacher") items = teacherItems;
   if (user?.role === "student") items = studentItems;
 
