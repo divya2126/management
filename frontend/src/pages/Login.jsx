@@ -18,7 +18,7 @@ export default function Login() {
       // Use Context login to update state instantly
       login(res.data.token, res.data.user);
 
-      message.success("Login successful 🚀");
+      message.success("Login successful ");
 
       navigate("/dashboard");
     } catch (err) {

@@ -119,7 +119,15 @@ export default function Teachers() {
           <Tag color="orange">On Leave</Tag>
         ),
     },
-
+    {
+      title: "Role",
+      dataIndex: "role",
+      render:(role) => role === "hod" ? (
+        <Tag color="purple">HOD</Tag>
+      ) : (
+        <Tag color="cyan">Professor</Tag>
+      ),
+    },
     {
       title: "Action",
       render: (_, record) => (

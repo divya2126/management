@@ -18,7 +18,7 @@ const TimetableSchema = new mongoose.Schema({
   },
   teacherId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "RegisterModel",  // We use this as teacher reference now
+    ref: "RegisterModel",
     required: true,
   },
   roomId: {
@@ -28,17 +28,19 @@ const TimetableSchema = new mongoose.Schema({
   },
   dayOfWeek: {
     type: String,
-    enum: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+    enum: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
     required: true,
   },
-  startTime: {
-    type: String, // e.g. "09:00 AM"
+
+  // 🔥 ADD THIS
+  slot: {
+    type: String,
     required: true,
   },
-  endTime: {
-    type: String, // e.g. "10:30 AM"
-    required: true,
-  },
+
+  startTime: String,
+  endTime: String,
+
 }, { timestamps: true });
 
 module.exports = mongoose.model("Timetable", TimetableSchema);
