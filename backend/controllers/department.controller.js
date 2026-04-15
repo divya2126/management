@@ -26,3 +26,14 @@ exports.deleteDepartment = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+exports.updateDepartment = async (req, res) => {
+  try {
+    const dept = await Department.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!dept) return res.status(404).json({ message: "Department not found" });
+    res.status(200).json(dept);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+

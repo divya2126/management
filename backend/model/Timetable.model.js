@@ -18,7 +18,7 @@ const TimetableSchema = new mongoose.Schema({
   },
   teacherId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "RegisterModel",
+    ref: "Teacher",
     required: true,
   },
   roomId: {
@@ -42,5 +42,9 @@ const TimetableSchema = new mongoose.Schema({
   endTime: String,
 
 }, { timestamps: true });
+
+// 🔒 DB-level enforcement: one teacher per slot, one room per slot
+TimetableSchema.index({ teacherId: 1, dayOfWeek: 1, slot: 1 }, { unique: true });
+TimetableSchema.index({ roomId: 1, dayOfWeek: 1, slot: 1 }, { unique: true });
 
 module.exports = mongoose.model("Timetable", TimetableSchema);

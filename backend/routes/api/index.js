@@ -7,5 +7,8 @@ router.use("/students", require("./student.route"));
 router.use("/notifications", require("./notification.route"));
 router.use("/timetable", require("./timetable.route"));
 router.use("/dashboard", require("./dashboard.route"));
+router.use("/attendance", require("./attendance.route"));
+router.use("/leave", require("./leave.route"));
+router.use("/exams", require("./exam.route"));
 
 module.exports = router;

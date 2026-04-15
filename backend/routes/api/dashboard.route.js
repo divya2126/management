@@ -7,7 +7,6 @@ const roleMiddleware = require("../../middleware/role.middleware");
 router.get(
   "/metrics",
   authMiddleware,
-  roleMiddleware("admin", "hod"),
   dashboardCtrl.getDashboardMetrics
 );
 

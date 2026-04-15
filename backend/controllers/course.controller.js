@@ -26,3 +26,14 @@ exports.deleteCourse = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+exports.updateCourse = async (req, res) => {
+  try {
+    const course = await Course.findByIdAndUpdate(req.params.id, req.body, { new: true }).populate("department", "name code");
+    if (!course) return res.status(404).json({ message: "Course not found" });
+    res.status(200).json(course);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+

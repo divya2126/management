@@ -2,92 +2,97 @@ const RegisterModel = require("../model/Register.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const registerService = async (data) => {
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const { name, password } = data;
-  const email = data.email?.toLowerCase();
-
-  // check if user exists
-  const existingUser = await RegisterModel.findOne({ email });
-
-  if (existingUser) {
-    throw new Error("User already exists");
-  }
-
-  // hash password
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
-
-  // create user
-  const user = await RegisterModel.create({
-    name,
-    email,
-    password: hashedPassword,
-    role: "student", // FORCE student role for public registration
+const signToken = (user) =>
+  jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+    expiresIn: "1d",
   });
 
-  // generate token
-  const token = jwt.sign(
-    {
-      id: user._id,
-      role: user.role,
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: "1d" }
-  );
-
-  return {
-    user,
-    token,
-  };
+// Strip password + provider from the user object before sending to client
+const sanitizeUser = (user) => {
+  const obj = user.toObject ? user.toObject() : { ...user };
+  delete obj.password;
+  delete obj.__v;
+  return obj;
 };
 
-    const loginService = async (data) => {
+// ─── Register ─────────────────────────────────────────────────────────────────
+const registerService = async (data) => {
+  const { name, password } = data;
+  const email = data.email?.toLowerCase().trim();
 
+  // ✅ Input validation
+  if (!name || !email || !password) {
+    throw new Error("Name, email, and password are required");
+  }
+  if (name.trim().length < 2) {
+    throw new Error("Name must be at least 2 characters");
+  }
+  if (!isValidEmail(email)) {
+    throw new Error("Invalid email address");
+  }
+  if (password.length < 8) {
+    throw new Error("Password must be at least 8 characters");
+  }
+
+  const existingUser = await RegisterModel.findOne({ email });
+  if (existingUser) {
+    throw new Error("An account with this email already exists");
+  }
+
+  const salt = await bcrypt.genSalt(12); // ✅ Increased from 10 → 12
+  const hashedPassword = await bcrypt.hash(password, salt);
+
+  const user = await RegisterModel.create({
+    name: name.trim(),
+    email,
+    password: hashedPassword,
+    role: "student", // Force student role for public registration
+  });
+
+  const token = signToken(user);
+
+  return { user: sanitizeUser(user), token }; // ✅ Password stripped
+};
+
+// ─── Login ────────────────────────────────────────────────────────────────────
+const loginService = async (data) => {
   const { password } = data;
-  const email = data.email?.toLowerCase();
+  const email = data.email?.toLowerCase().trim();
 
+  // ✅ Input validation
   if (!email || !password) {
     throw new Error("Email and password are required");
+  }
+  if (!isValidEmail(email)) {
+    throw new Error("Invalid email address");
   }
 
   const user = await RegisterModel.findOne({ email }).select("+password");
 
   if (!user) {
-    throw new Error("User not found");
+    // ✅ Generic message — don't reveal whether the email exists or not
+    throw new Error("Invalid email or password");
   }
 
-  // 🔥 Prevent Google users from normal login
   if (user.provider === "google") {
-    throw new Error("Please login with Google");
+    throw new Error("This account uses Google login. Please sign in with Google.");
   }
 
-  if (!password) {
-    throw new Error("Password is required");
+  if (!user.password) {
+    throw new Error("Invalid email or password");
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
-
   if (!isMatch) {
-    throw new Error("Invalid password");
+    throw new Error("Invalid email or password"); // ✅ Don't say "Invalid password" (reveals email is valid)
   }
 
-  const token = jwt.sign(
-    {
-      id: user._id,
-      role: user.role,
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: "1d" }
-  );
+  const token = signToken(user);
 
-  return {
-    user,
-    token,
-  };
+  return { user: sanitizeUser(user), token }; // ✅ Password stripped
 };
 
-module.exports = {
-  registerService,
-  loginService,
-};
+module.exports = { registerService, loginService };

@@ -12,6 +12,12 @@ import Departments from "../pages/Departments";
 import Courses from "../pages/Courses";
 import Subjects from "../pages/Subjects";
 import Rooms from "../pages/Rooms";
+import Attendance from "../pages/Attendance";
+import LeaveRequests from "../pages/LeaveRequests";
+import SendNotification from "../pages/SendNotification";
+import Exams from "../pages/Exams";
+import Notifications from "../pages/Notifications";
+import Settings from "../pages/Settings";
 import AdminLayout from "../layout/AdminLayout";
 import ProtectedRoute from "../app/ProtectedRoute";
 
@@ -32,29 +38,31 @@ const AppRoutes = () => {
           {/* Admin Only Routes */}
           <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
             <Route path="/departments" element={<Departments />} />
+          </Route>
+
+          {/* Admin & HOD Shared Routes */}
+          <Route element={<ProtectedRoute allowedRoles={["admin", "hod"]} />}>
             <Route path="/courses" element={<Courses />} />
             <Route path="/subjects" element={<Subjects />} />
             <Route path="/rooms" element={<Rooms />} />
-          </Route>
-
-          {/* Admin & HOD Admin Routes */}
-          <Route element={<ProtectedRoute allowedRoles={["admin", "hod"]} />}>
-            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/teachers" element={<Teachers />} />
             <Route path="/student" element={<Student />} />
+            <Route path="/exams" element={<Exams />} />
           </Route>
 
           {/* Admin, HOD, & Teacher Shared Routes */}
           <Route element={<ProtectedRoute allowedRoles={["admin", "hod", "teacher"]} />}>
-            <Route path="/modules" element={<div>Modules feature coming soon</div>} />
-            <Route path="/attendance" element={<div>Attendance tracking coming soon</div>} />
-            <Route path="/exams" element={<div>Exams coming soon</div>} />
+            <Route path="/leave-requests" element={<LeaveRequests />} />
           </Route>
 
           {/* Shared by Everyone */}
           <Route element={<ProtectedRoute allowedRoles={["admin", "hod", "teacher", "student"]} />}>
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/timetable" element={<Timetable />} />
-            <Route path="/notifications" element={<div>Notifications coming soon</div>} />
+            <Route path="/attendance" element={<Attendance />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/send-notification" element={<SendNotification />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
 
         </Route>

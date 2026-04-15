@@ -6,6 +6,7 @@ import api from "../services/api";
 export default function Departments() {
   const [departments, setDepartments] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null); // null = create mode
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
 
@@ -18,20 +19,35 @@ export default function Departments() {
     }
   };
 
-  useEffect(() => {
-    fetchDepartments();
-  }, []);
+  useEffect(() => { fetchDepartments(); }, []);
 
-  const handleAdd = async (values) => {
+  const openCreate = () => {
+    setEditingRecord(null);
+    form.resetFields();
+    setIsModalOpen(true);
+  };
+
+  const openEdit = (record) => {
+    setEditingRecord(record);
+    form.setFieldsValue({ name: record.name, code: record.code, description: record.description });
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      await api.post("/management/departments", values);
-      message.success("Department added successfully");
+      if (editingRecord) {
+        await api.put(`/management/departments/${editingRecord._id}`, values);
+        message.success("Department updated successfully");
+      } else {
+        await api.post("/management/departments", values);
+        message.success("Department added successfully");
+      }
       setIsModalOpen(false);
       form.resetFields();
       fetchDepartments();
     } catch (err) {
-      message.error(err.response?.data?.message || "Error adding department");
+      message.error(err.response?.data?.message || "Error saving department");
     } finally {
       setLoading(false);
     }
@@ -54,10 +70,10 @@ export default function Departments() {
     {
       title: "Action",
       key: "action",
-      width: 100,
+      width: 120,
       render: (_, record) => (
         <div className="flex gap-2">
-          <Button type="primary" icon={<EditOutlined />} size="small" />
+          <Button type="primary" icon={<EditOutlined />} size="small" onClick={() => openEdit(record)} />
           <Popconfirm title="Delete this department?" onConfirm={() => handleDelete(record._id)}>
             <Button danger icon={<DeleteOutlined />} size="small" />
           </Popconfirm>
@@ -73,23 +89,24 @@ export default function Departments() {
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Departments</h1>
           <p className="text-gray-500 mt-1">Manage the academic departments of your institution</p>
         </div>
-        <Button type="primary" size="large" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
+        <Button type="primary" size="large" icon={<PlusOutlined />} onClick={openCreate}>
           Add Department
         </Button>
       </div>
 
       <div className="bg-white p-0 rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <Table dataSource={departments} columns={columns} rowKey="_id" pagination={{ pageSize: 8 }} className="custom-table" />
+        <Table dataSource={departments} columns={columns} rowKey="_id" pagination={{ pageSize: 8 }} />
       </div>
 
       <Modal
-        title={<h3 className="text-lg font-bold">Add New Department</h3>}
+        title={<h3 className="text-lg font-bold">{editingRecord ? "Edit Department" : "Add New Department"}</h3>}
         open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
+        onCancel={() => { setIsModalOpen(false); form.resetFields(); }}
         footer={null}
         centered
+        destroyOnClose
       >
-        <Form form={form} layout="vertical" onFinish={handleAdd} className="mt-4">
+        <Form form={form} layout="vertical" onFinish={handleSubmit} className="mt-4">
           <Form.Item name="name" label="Department Name" rules={[{ required: true, message: "Required" }]}>
             <Input size="large" placeholder="e.g. Computer Science Engineering" />
           </Form.Item>
@@ -100,7 +117,7 @@ export default function Departments() {
             <Input.TextArea rows={3} placeholder="Optional details..." />
           </Form.Item>
           <Button type="primary" htmlType="submit" size="large" loading={loading} className="w-full mt-2">
-            Save Department
+            {editingRecord ? "Update Department" : "Save Department"}
           </Button>
         </Form>
       </Modal>

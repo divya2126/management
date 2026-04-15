@@ -7,28 +7,34 @@ const courseCtrl = require("../../controllers/course.controller");
 const subjectCtrl = require("../../controllers/subject.controller");
 const roomCtrl = require("../../controllers/room.controller");
 
-// Require Admin rights for academic structure routes
+// Require Auth for all academic structure routes
 router.use(authMiddleware);
-router.use(roleMiddleware("admin"));
+
+const adminOnly = roleMiddleware("admin");
+const adminAndHod = roleMiddleware("admin", "hod");
 
 // Departments
-router.post("/departments", departmentCtrl.createDepartment);
-router.get("/departments", departmentCtrl.getDepartments);
-router.delete("/departments/:id", departmentCtrl.deleteDepartment);
+router.post("/departments", adminOnly, departmentCtrl.createDepartment);
+router.get("/departments", adminAndHod, departmentCtrl.getDepartments);
+router.put("/departments/:id", adminOnly, departmentCtrl.updateDepartment);
+router.delete("/departments/:id", adminOnly, departmentCtrl.deleteDepartment);
 
 // Courses
-router.post("/courses", courseCtrl.createCourse);
+router.post("/courses", adminAndHod, courseCtrl.createCourse);
 router.get("/courses", courseCtrl.getCourses);
-router.delete("/courses/:id", courseCtrl.deleteCourse);
+router.put("/courses/:id", adminAndHod, courseCtrl.updateCourse);
+router.delete("/courses/:id", adminAndHod, courseCtrl.deleteCourse);
 
 // Subjects
-router.post("/subjects", subjectCtrl.createSubject);
+router.post("/subjects", adminAndHod, subjectCtrl.createSubject);
 router.get("/subjects", subjectCtrl.getSubjects);
-router.delete("/subjects/:id", subjectCtrl.deleteSubject);
+router.put("/subjects/:id", adminAndHod, subjectCtrl.updateSubject);
+router.delete("/subjects/:id", adminAndHod, subjectCtrl.deleteSubject);
 
 // Rooms
-router.post("/rooms", roomCtrl.createRoom);
+router.post("/rooms", adminAndHod, roomCtrl.createRoom);
 router.get("/rooms", roomCtrl.getRooms);
-router.delete("/rooms/:id", roomCtrl.deleteRoom);
+router.put("/rooms/:id", adminAndHod, roomCtrl.updateRoom);
+router.delete("/rooms/:id", adminAndHod, roomCtrl.deleteRoom);
 
 module.exports = router;

@@ -9,6 +9,7 @@ export default function Subjects() {
   const [subjects, setSubjects] = useState([]);
   const [courses, setCourses] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
 
@@ -16,7 +17,7 @@ export default function Subjects() {
     try {
       const [subsRes, coursesRes] = await Promise.all([
         api.get("/management/subjects"),
-        api.get("/management/courses")
+        api.get("/management/courses"),
       ]);
       setSubjects(subsRes.data);
       setCourses(coursesRes.data);
@@ -25,20 +26,44 @@ export default function Subjects() {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
-  const handleAdd = async (values) => {
+  const openCreate = () => {
+    setEditingRecord(null);
+    form.resetFields();
+    form.setFieldsValue({ type: "theory", credits: 3 });
+    setIsModalOpen(true);
+  };
+
+  const openEdit = (record) => {
+    setEditingRecord(record);
+    form.setFieldsValue({
+      name: record.name,
+      code: record.code,
+      course: record.course?._id || record.course,
+      semester: record.semester,
+      type: record.type,
+      credits: record.credits,
+      weeklyLectures: record.weeklyLectures,
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      await api.post("/management/subjects", values);
-      message.success("Subject added successfully");
+      if (editingRecord) {
+        await api.put(`/management/subjects/${editingRecord._id}`, values);
+        message.success("Subject updated successfully");
+      } else {
+        await api.post("/management/subjects", values);
+        message.success("Subject added successfully");
+      }
       setIsModalOpen(false);
       form.resetFields();
       fetchData();
     } catch (err) {
-      message.error(err.response?.data?.message || "Error adding subject");
+      message.error(err.response?.data?.message || "Error saving subject");
     } finally {
       setLoading(false);
     }
@@ -59,24 +84,24 @@ export default function Subjects() {
     { title: "Code", dataIndex: "code", key: "code", render: (text) => <span className="font-mono bg-teal-50 text-teal-600 px-2 py-1 rounded inline-block">{text}</span> },
     { title: "Course", dataIndex: "course", key: "course", render: (c) => c?.name || "Unknown" },
     { title: "Sem", dataIndex: "semester", key: "semester" },
-    { 
-      title: "Type", 
-      dataIndex: "type", 
+    {
+      title: "Type",
+      dataIndex: "type",
       key: "type",
       render: (type) => (
         <Tag color={type === "lab" ? "geekblue" : "purple"} className="uppercase font-semibold tracking-wide border-none px-2 rounded">
           {type}
         </Tag>
-      )
+      ),
     },
     { title: "Lectures/Week", dataIndex: "weeklyLectures", key: "weeklyLectures" },
     {
       title: "Action",
       key: "action",
-      width: 100,
+      width: 120,
       render: (_, record) => (
         <div className="flex gap-2">
-          <Button type="primary" icon={<EditOutlined />} size="small" />
+          <Button type="primary" icon={<EditOutlined />} size="small" onClick={() => openEdit(record)} />
           <Popconfirm title="Delete this subject?" onConfirm={() => handleDelete(record._id)}>
             <Button danger icon={<DeleteOutlined />} size="small" />
           </Popconfirm>
@@ -92,7 +117,7 @@ export default function Subjects() {
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Subjects</h1>
           <p className="text-gray-500 mt-1">Manage subjects and weekly lecture allocations</p>
         </div>
-        <Button type="primary" size="large" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
+        <Button type="primary" size="large" icon={<PlusOutlined />} onClick={openCreate}>
           Add Subject
         </Button>
       </div>
@@ -102,34 +127,29 @@ export default function Subjects() {
       </div>
 
       <Modal
-        title={<h3 className="text-lg font-bold">Add New Subject</h3>}
+        title={<h3 className="text-lg font-bold">{editingRecord ? "Edit Subject" : "Add New Subject"}</h3>}
         open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
+        onCancel={() => { setIsModalOpen(false); form.resetFields(); }}
         footer={null}
         centered
+        destroyOnClose
       >
-        <Form form={form} layout="vertical" onFinish={handleAdd} className="mt-4" initialValues={{ type: "theory", credits: 3 }}>
+        <Form form={form} layout="vertical" onFinish={handleSubmit} className="mt-4">
           <Form.Item name="name" label="Subject Name" rules={[{ required: true, message: "Required" }]}>
             <Input size="large" placeholder="e.g. Data Structures" />
           </Form.Item>
-          
           <Form.Item name="code" label="Subject Code" rules={[{ required: true, message: "Required" }]}>
             <Input size="large" placeholder="e.g. CS201" className="uppercase" />
           </Form.Item>
-
           <Form.Item name="course" label="Course" rules={[{ required: true, message: "Required" }]}>
             <Select size="large" placeholder="Select a course">
-              {courses.map((c) => (
-                <Option key={c._id} value={c._id}>{c.name}</Option>
-              ))}
+              {courses.map((c) => <Option key={c._id} value={c._id}>{c.name}</Option>)}
             </Select>
           </Form.Item>
-
           <div className="grid grid-cols-2 gap-4">
             <Form.Item name="semester" label="Semester" rules={[{ required: true, message: "Required" }]}>
               <InputNumber size="large" min={1} max={12} className="w-full" placeholder="e.g. 3" />
             </Form.Item>
-            
             <Form.Item name="type" label="Type" rules={[{ required: true, message: "Required" }]}>
               <Select size="large">
                 <Option value="theory">Theory</Option>
@@ -137,27 +157,20 @@ export default function Subjects() {
               </Select>
             </Form.Item>
           </div>
-
           <div className="grid grid-cols-2 gap-4">
             <Form.Item name="credits" label="Credits" rules={[{ required: true }]}>
               <InputNumber size="large" min={1} max={6} className="w-full" />
             </Form.Item>
-            
-            <Form.Item 
-              name="weeklyLectures" 
-              label={
-                <span>
-                  Weekly Lectures 
-                  <span className="text-xs text-blue-500 ml-2">(Used by Timetable Engine)</span>
-                </span>
-              } 
-              rules={[{ required: true, message: "Required" }]}>
+            <Form.Item
+              name="weeklyLectures"
+              label={<span>Weekly Lectures <span className="text-xs text-blue-500 ml-2">(Used by Timetable)</span></span>}
+              rules={[{ required: true, message: "Required" }]}
+            >
               <InputNumber size="large" min={1} max={10} className="w-full" placeholder="e.g. 4" />
             </Form.Item>
           </div>
-
           <Button type="primary" htmlType="submit" size="large" loading={loading} className="w-full mt-2">
-            Save Subject
+            {editingRecord ? "Update Subject" : "Save Subject"}
           </Button>
         </Form>
       </Modal>

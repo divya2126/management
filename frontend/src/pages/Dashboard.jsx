@@ -54,6 +54,56 @@ export default function Dashboard() {
   return (
     <div className="max-w-7xl mx-auto flex flex-col space-y-6 animate-fade-in font-sans">
       
+      {user?.role === "student" && (
+        <>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-2">
+            <div>
+              <h1 className="text-[28px] font-bold text-[#1e293b] tracking-tight font-sans">Student Dashboard</h1>
+              <p className="text-gray-500 text-[15px] mt-1">
+                Welcome back, {user?.name}. Here's your academic progress.
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="bg-white border border-gray-200/60 rounded-xl p-6 shadow-sm">
+              <p className="text-[#64748b] text-[15px] font-medium mb-2">Overall Grade</p>
+              <h2 className="text-[32px] font-bold text-[#0f172a] leading-none mb-2">A-</h2>
+              <p className="text-gray-400 text-sm">Top 15% of your class</p>
+            </div>
+            <div className="bg-white border border-gray-200/60 rounded-xl p-6 shadow-sm">
+              <p className="text-[#64748b] text-[15px] font-medium mb-2">Attendance Percentage</p>
+              <h2 className="text-[32px] font-bold text-[#0f172a] leading-none mb-2">92%</h2>
+              <p className="text-[#10b981] text-xs font-semibold mt-4">+2% this month</p>
+            </div>
+          </div>
+          <div className="bg-white border border-gray-200/60 rounded-xl p-6 shadow-sm h-64">
+             <h3 className="text-lg font-bold text-[#1e293b]">Today's Timetable</h3>
+             <p className="text-sm text-gray-500 mt-2">Go to My Timetable on the left to see your full schedule for the week.</p>
+          </div>
+        </>
+      )}
+
+      {user?.role === "teacher" && (
+        <>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-2">
+            <div>
+              <h1 className="text-[28px] font-bold text-[#1e293b] tracking-tight font-sans">Professor Dashboard</h1>
+              <p className="text-gray-500 text-[15px] mt-1">
+                Welcome back, Prof. {user?.name}.
+              </p>
+            </div>
+          </div>
+          <div className="bg-white border border-gray-200/60 rounded-xl p-6 shadow-sm">
+            <h3 className="text-lg font-bold text-[#1e293b] mb-4">Quick Actions</h3>
+            <div className="text-sm text-gray-600">
+              Use the sidebar to request leave, mark attendance, or push notifications to your classes.
+            </div>
+          </div>
+        </>
+      )}
+
+      {(user?.role === "admin" || user?.role === "hod") && (
+        <>
       {/* HEADER ROW */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-2">
         <div>
@@ -231,6 +281,8 @@ export default function Dashboard() {
         </div>
 
       </div>
+      </>
+      )}
     </div>
   );
 }

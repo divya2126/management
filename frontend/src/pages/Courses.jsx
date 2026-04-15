@@ -9,6 +9,7 @@ export default function Courses() {
   const [courses, setCourses] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
 
@@ -16,7 +17,7 @@ export default function Courses() {
     try {
       const [coursesRes, deptsRes] = await Promise.all([
         api.get("/management/courses"),
-        api.get("/management/departments")
+        api.get("/management/departments"),
       ]);
       setCourses(coursesRes.data);
       setDepartments(deptsRes.data);
@@ -25,20 +26,40 @@ export default function Courses() {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
-  const handleAdd = async (values) => {
+  const openCreate = () => {
+    setEditingRecord(null);
+    form.resetFields();
+    setIsModalOpen(true);
+  };
+
+  const openEdit = (record) => {
+    setEditingRecord(record);
+    form.setFieldsValue({
+      name: record.name,
+      code: record.code,
+      department: record.department?._id || record.department,
+      totalSemesters: record.totalSemesters,
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      await api.post("/management/courses", values);
-      message.success("Course added successfully");
+      if (editingRecord) {
+        await api.put(`/management/courses/${editingRecord._id}`, values);
+        message.success("Course updated successfully");
+      } else {
+        await api.post("/management/courses", values);
+        message.success("Course added successfully");
+      }
       setIsModalOpen(false);
       form.resetFields();
       fetchData();
     } catch (err) {
-      message.error(err.response?.data?.message || "Error adding course");
+      message.error(err.response?.data?.message || "Error saving course");
     } finally {
       setLoading(false);
     }
@@ -62,10 +83,10 @@ export default function Courses() {
     {
       title: "Action",
       key: "action",
-      width: 100,
+      width: 120,
       render: (_, record) => (
         <div className="flex gap-2">
-          <Button type="primary" icon={<EditOutlined />} size="small" />
+          <Button type="primary" icon={<EditOutlined />} size="small" onClick={() => openEdit(record)} />
           <Popconfirm title="Delete this course?" onConfirm={() => handleDelete(record._id)}>
             <Button danger icon={<DeleteOutlined />} size="small" />
           </Popconfirm>
@@ -78,10 +99,10 @@ export default function Courses() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Courses </h1>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Courses</h1>
           <p className="text-gray-500 mt-1">Manage academic programs (e.g., B.Tech, MBA)</p>
         </div>
-        <Button type="primary" size="large" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
+        <Button type="primary" size="large" icon={<PlusOutlined />} onClick={openCreate}>
           Add Course
         </Button>
       </div>
@@ -91,35 +112,30 @@ export default function Courses() {
       </div>
 
       <Modal
-        title={<h3 className="text-lg font-bold">Add New Course</h3>}
+        title={<h3 className="text-lg font-bold">{editingRecord ? "Edit Course" : "Add New Course"}</h3>}
         open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
+        onCancel={() => { setIsModalOpen(false); form.resetFields(); }}
         footer={null}
         centered
+        destroyOnClose
       >
-        <Form form={form} layout="vertical" onFinish={handleAdd} className="mt-4">
+        <Form form={form} layout="vertical" onFinish={handleSubmit} className="mt-4">
           <Form.Item name="name" label="Course Name" rules={[{ required: true, message: "Required" }]}>
             <Input size="large" placeholder="e.g. B.Tech Computer Science" />
           </Form.Item>
-          
           <Form.Item name="code" label="Course Code" rules={[{ required: true, message: "Required" }]}>
             <Input size="large" placeholder="e.g. BTECH-CSE" className="uppercase" />
           </Form.Item>
-
           <Form.Item name="department" label="Department" rules={[{ required: true, message: "Required" }]}>
             <Select size="large" placeholder="Select a department">
-              {departments.map((d) => (
-                <Option key={d._id} value={d._id}>{d.name}</Option>
-              ))}
+              {departments.map((d) => <Option key={d._id} value={d._id}>{d.name}</Option>)}
             </Select>
           </Form.Item>
-
           <Form.Item name="totalSemesters" label="Total Semesters" rules={[{ required: true, message: "Required" }]}>
             <InputNumber size="large" min={1} max={12} className="w-full" placeholder="e.g. 8" />
           </Form.Item>
-
           <Button type="primary" htmlType="submit" size="large" loading={loading} className="w-full mt-2">
-            Save Course
+            {editingRecord ? "Update Course" : "Save Course"}
           </Button>
         </Form>
       </Modal>

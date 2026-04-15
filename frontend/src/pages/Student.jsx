@@ -1,65 +1,86 @@
-import {
-  Button,
-  Input,
-  Table,
-  Tag,
-  Modal,
-  Form,
-  Select,
-  message,
-  Space,
-  Upload
-} from "antd";
-import { SearchOutlined, PlusOutlined, DeleteOutlined, UploadOutlined, EditOutlined } from "@ant-design/icons";
+import { Button, Input, Table, Tag, Modal, Form, Select, message, Space, Popconfirm } from "antd";
+import { SearchOutlined, PlusOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../services/api";
 
 const { Option } = Select;
 
-const uploadProps = {
-  name: "file",
-  action: "https://660d2bd96ddfa2943b33731c.mockapi.io/api/upload",
-  headers: {
-    authorization: "authorization-text",
-  },
-  onChange(info) {
-    if (info.file.status === "done") {
-      message.success(`${info.file.name} file uploaded successfully`);
-    } else if (info.file.status === "error") {
-      message.error(`${info.file.name} file upload failed.`);
-    }
-  }
-};
-
 export default function Student() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchText, setSearchText] = useState("");
-  const [students, setStudents] = useState([]);
-  const [form] = Form.useForm();
+  const [isModalOpen, setIsModalOpen]   = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
+  const [searchText, setSearchText]     = useState("");
+  const [students, setStudents]         = useState([]);
+  const [loading, setLoading]           = useState(false);
+  const [form]                          = Form.useForm();
 
-  useEffect(() => {
-    fetchStudents();
-  }, []);
+  useEffect(() => { fetchStudents(); }, []);
 
   const fetchStudents = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5001/api/students");
-      setStudents(data);
-    } catch (error) {
+      const { data } = await api.get("/students");
+      // API now returns { data: [], pagination: {} } — extract the array
+      setStudents(data?.data || data);
+    } catch {
       message.error("Failed to fetch students");
     }
   };
 
-  const filteredStudents = students.filter((student) =>
-    student.name.toLowerCase().includes(searchText.toLowerCase())
+  const filteredStudents = students.filter((s) =>
+    s.name.toLowerCase().includes(searchText.toLowerCase())
   );
+
+  const openCreate = () => {
+    setEditingRecord(null);
+    form.resetFields();
+    setIsModalOpen(true);
+  };
+
+  const openEdit = (record) => {
+    setEditingRecord(record);
+    form.setFieldsValue({
+      name:       record.name,
+      email:      record.email,
+      age:        record.age,
+      department: record.department,
+      status:     record.status,
+      fatherName: record.fatherName,
+      motherName: record.motherName,
+      class10Marks: record.class10Marks,
+      class12Marks: record.class12Marks,
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleOk = async () => {
+    try {
+      const values = await form.validateFields();
+      setLoading(true);
+
+      if (editingRecord) {
+        await api.put(`/students/${editingRecord._id}`, values);
+        message.success("Student updated successfully");
+      } else {
+        await api.post("/students", values);
+        message.success("Student added successfully");
+      }
+
+      form.resetFields();
+      setIsModalOpen(false);
+      fetchStudents();
+    } catch (err) {
+      if (err?.errorFields) return;
+      message.error(err?.response?.data?.message || "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const deleteStudent = async (id) => {
     try {
-      await axios.delete(`http://localhost:5001/api/students/${id}`);
+      await api.delete(`/students/${id}`);
       message.success("Student deleted");
       fetchStudents();
-    } catch (error) {
+    } catch {
       message.error("Failed to delete student");
     }
   };
@@ -67,11 +88,7 @@ export default function Student() {
   const columns = [
     { title: "Name", dataIndex: "name" },
     { title: "Age", dataIndex: "age" },
-    {
-      title: "Department",
-      dataIndex: "department",
-      render: (dept) => <Tag color="blue">{dept}</Tag>,
-    },
+    { title: "Department", dataIndex: "department", render: (dept) => <Tag color="blue">{dept}</Tag> },
     { title: "Email", dataIndex: "email" },
     {
       title: "Status",
@@ -83,35 +100,14 @@ export default function Student() {
       title: "Action",
       render: (_, record) => (
         <Space>
-          <Button type="primary" icon={<EditOutlined />}>
-            Edit
-          </Button>
-          <Button danger icon={<DeleteOutlined />} onClick={() => deleteStudent(record._id)}>
-            Delete
-          </Button>
+          <Button type="primary" icon={<EditOutlined />} onClick={() => openEdit(record)}>Edit</Button>
+          <Popconfirm title="Delete this student?" onConfirm={() => deleteStudent(record._id)}>
+            <Button danger icon={<DeleteOutlined />}>Delete</Button>
+          </Popconfirm>
         </Space>
       ),
     },
   ];
-
-  const handleOk = async () => {
-    try {
-      const values = await form.validateFields();
-      await axios.post("http://localhost:5001/api/students", values);
-      message.success("Student added successfully");
-      form.resetFields();
-      setIsModalOpen(false);
-      fetchStudents();
-    } catch (error) {
-      if (error?.response?.data?.message) {
-        message.error(error.response.data.message);
-      } else if (error.errorFields) {
-        // Validation format error, ignore here
-      } else {
-        message.error("An error occurred");
-      }
-    }
-  };
 
   return (
     <div style={{ padding: "20px" }}>
@@ -125,31 +121,38 @@ export default function Student() {
           style={{ width: "250px" }}
           onChange={(e) => setSearchText(e.target.value)}
         />
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
+        <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
           Add Student
         </Button>
       </div>
 
       <Table columns={columns} dataSource={filteredStudents} rowKey="_id" pagination={{ pageSize: 5 }} />
 
-      <Modal title="Add Student" open={isModalOpen} onOk={handleOk} onCancel={() => { setIsModalOpen(false); form.resetFields(); }} okText="Save">
+      <Modal
+        title={editingRecord ? "Edit Student" : "Add Student"}
+        open={isModalOpen}
+        onOk={handleOk}
+        onCancel={() => { setIsModalOpen(false); form.resetFields(); }}
+        confirmLoading={loading}
+        okText={editingRecord ? "Save Changes" : "Save"}
+        width={600}
+        destroyOnClose
+      >
         <Form form={form} layout="vertical">
-          <Form.Item label="Profile Photo">
-            <Upload {...uploadProps}>
-              <Button icon={<UploadOutlined />}>Click to Upload</Button>
-            </Upload>
-          </Form.Item>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
             <Form.Item name="name" label="Full Name" rules={[{ required: true, message: "Required" }]}>
               <Input placeholder="Enter full name" />
             </Form.Item>
-            <Form.Item name="email" label="Email" rules={[{ required: true, message: "Required" }, { type: "email", message: "Invalid email" }]}>
-              <Input placeholder="Enter email" />
+            <Form.Item
+              name="email"
+              label="Email"
+              rules={[{ required: true, message: "Required" }, { type: "email", message: "Invalid email" }]}
+            >
+              <Input placeholder="Enter email" disabled={!!editingRecord} />
             </Form.Item>
           </div>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
             <Form.Item name="age" label="Age">
               <Input type="number" placeholder="Enter age" />
             </Form.Item>
@@ -163,7 +166,16 @@ export default function Student() {
             </Form.Item>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          {editingRecord && (
+            <Form.Item name="status" label="Status">
+              <Select>
+                <Option value="Active">Active</Option>
+                <Option value="On Leave">On Leave</Option>
+              </Select>
+            </Form.Item>
+          )}
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
             <Form.Item name="fatherName" label="Father Name">
               <Input placeholder="Father name" />
             </Form.Item>
@@ -171,8 +183,8 @@ export default function Student() {
               <Input placeholder="Mother name" />
             </Form.Item>
           </div>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
             <Form.Item name="class10Marks" label="Class 10 Marks">
               <Input placeholder="e.g. 95%" />
             </Form.Item>
