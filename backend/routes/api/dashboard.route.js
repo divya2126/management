@@ -10,4 +10,18 @@ router.get(
   dashboardCtrl.getDashboardMetrics
 );
 
+router.get(
+  "/student-metrics",
+  authMiddleware,
+  roleMiddleware(["student"]),
+  dashboardCtrl.getStudentMetrics
+);
+
+router.get(
+  "/teacher-metrics",
+  authMiddleware,
+  roleMiddleware(["teacher", "hod", "admin"]),
+  dashboardCtrl.getTeacherMetrics
+);
+
 module.exports = router;

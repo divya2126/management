@@ -1,82 +1,78 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Form, Select, DatePicker, Button, Table, Switch, message, Spin, Progress, Alert } from 'antd';
-import { CheckCircleOutlined, CloseCircleOutlined, BookOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
+import { Form, Input, Button, Table, message, Spin, Progress, Alert, Modal, Card, Typography, Row, Col, QRCode, Checkbox } from 'antd';
+import { CheckCircleOutlined, CloseCircleOutlined, BookOutlined, ClockCircleOutlined, EnvironmentOutlined, TeamOutlined, UserOutlined } from '@ant-design/icons';
 import api from '../services/api';
 
-const { Option } = Select;
+const { Title, Text } = Typography;
 
-// ─── Student View: Real attendance data from API ──────────────────────────────
+// ─── Student View: Code input and real attendance data ──────────────────────────────
 function StudentAttendanceView() {
-  const [data, setData]     = useState(null);
+  const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError]   = useState(null);
+  const [error, setError]     = useState(null);
+  const [codeLoading, setCodeLoading] = useState(false);
+  const [codeForm] = Form.useForm();
+
+  const fetchSummary = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/attendance/my');
+      setData(res.data.data);
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Could not load your attendance records.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetch = async () => {
-      try {
-        const res = await api.get('/attendance/my');
-        setData(res.data.data);
-      } catch (err) {
-        setError(err?.response?.data?.message || 'Could not load your attendance records.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetch();
+    fetchSummary();
   }, []);
 
-  if (loading) return <div className="flex justify-center py-20"><Spin size="large" tip="Loading your attendance..." /></div>;
+  const handleVerifyCode = async (values) => {
+    try {
+      setCodeLoading(true);
+      await api.post('/attendance/session/verify', { token: values.code });
+      message.success("Attendance marked successfully! ✅");
+      codeForm.resetFields();
+      fetchSummary();
+    } catch (err) {
+      message.error(err?.response?.data?.message || "Invalid or expired code.");
+    } finally {
+      setCodeLoading(false);
+    }
+  };
+
+  if (loading && !data) return <div className="flex justify-center py-20"><Spin size="large" tip="Loading your attendance..." /></div>;
 
   if (error) return (
     <div className="p-6">
-      <Alert
-        message="Attendance Unavailable"
-        description={error}
-        type="warning"
-        showIcon
-      />
+      <Alert message="Attendance Unavailable" description={error} type="warning" showIcon />
     </div>
   );
 
-  if (!data) return null;
-
-  const { overallPercentage, totalClasses, present, absent, perSubject, studentName } = data;
+  const { overallPercentage, totalClasses, present, absent, perSubject, studentName } = data || {};
 
   const statusColor = overallPercentage === null ? '#6b7280'
     : overallPercentage >= 75 ? '#16a34a'
     : overallPercentage >= 60 ? '#d97706'
     : '#dc2626';
 
-  const statusText = overallPercentage === null ? 'No records yet'
-    : overallPercentage >= 75 ? 'Good Standing ✅'
-    : overallPercentage >= 60 ? 'At Risk ⚠️'
-    : 'Below Minimum ❌';
-
   const columns = [
     { title: 'Subject', dataIndex: 'subject', key: 'subject', className: 'font-medium' },
-    {
-      title: 'Attended',
-      key: 'attended',
-      render: (_, r) => `${r.present} / ${r.total}`,
-    },
+    { title: 'Attended', key: 'attended', render: (_, r) => `${r.present} / ${r.total}` },
     {
       title: 'Percentage',
       key: 'percentage',
       render: (_, r) => (
-        <Progress
-          percent={r.percentage}
-          size="small"
-          strokeColor={r.percentage >= 75 ? '#16a34a' : r.percentage >= 60 ? '#d97706' : '#dc2626'}
-        />
+        <Progress percent={r.percentage} size="small" strokeColor={r.percentage >= 75 ? '#16a34a' : r.percentage >= 60 ? '#d97706' : '#dc2626'} />
       ),
     },
     {
       title: 'Status',
       key: 'status',
-      render: (_, r) =>
-        r.percentage >= 75
+      render: (_, r) => r.percentage >= 75
           ? <span className="text-green-600 font-semibold flex items-center gap-1"><CheckCircleOutlined /> Good</span>
           : <span className="text-red-500 font-semibold flex items-center gap-1"><CloseCircleOutlined /> Low</span>,
     },
@@ -88,50 +84,60 @@ function StudentAttendanceView() {
         <BookOutlined className="text-indigo-600" /> My Attendance
       </h1>
 
+      {/* Code Entry Card */}
+      <Card className="mb-6 rounded-2xl shadow-sm border border-indigo-100" style={{ background: '#f8fafc' }}>
+        <div className="flex flex-col md:flex-row items-center gap-6">
+          <div className="flex-1">
+            <h2 className="text-lg font-bold text-gray-800">Mark Attendance</h2>
+            <p className="text-gray-500 text-sm">Are you in class right now? Enter the 6-digit code shown on the professor's screen.</p>
+          </div>
+          <div className="flex-1 w-full max-w-sm">
+            <Form form={codeForm} layout="inline" onFinish={handleVerifyCode} className="flex gap-2">
+              <Form.Item name="code" rules={[{ required: true, message: "Required" }]} className="flex-1 mb-0">
+                <Input placeholder="Enter 6-digit code..." size="large" className="text-center tracking-widest uppercase font-mono" maxLength={6} />
+              </Form.Item>
+              <Form.Item className="mb-0">
+                <Button type="primary" htmlType="submit" size="large" loading={codeLoading} style={{ background: '#4f46e5' }}>
+                  Verify
+                </Button>
+              </Form.Item>
+            </Form>
+          </div>
+        </div>
+      </Card>
+
       {/* Overall card */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6 flex flex-col md:flex-row gap-6 items-center">
-        {/* Circle */}
-        <div
-          className="w-32 h-32 rounded-full border-4 flex items-center justify-center flex-shrink-0"
-          style={{ borderColor: statusColor }}
-        >
-          <div className="text-center">
-            <p className="text-3xl font-bold" style={{ color: statusColor }}>
-              {overallPercentage !== null ? `${overallPercentage}%` : '—'}
-            </p>
-            <p className="text-xs text-gray-400">Overall</p>
+      {data && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6 flex flex-col md:flex-row gap-6 items-center">
+          <div className="w-32 h-32 rounded-full border-4 flex items-center justify-center flex-shrink-0" style={{ borderColor: statusColor }}>
+            <div className="text-center">
+              <p className="text-3xl font-bold" style={{ color: statusColor }}>
+                {overallPercentage !== null ? `${overallPercentage}%` : '—'}
+              </p>
+              <p className="text-xs text-gray-400">Overall</p>
+            </div>
+          </div>
+          <div>
+            <p className="text-xl font-bold text-gray-800">{studentName}</p>
+            <div className="flex gap-6 mt-3 text-sm text-gray-600">
+              <span>📅 Total: <b>{totalClasses}</b></span>
+              <span className="text-green-600">✅ Present: <b>{present}</b></span>
+              <span className="text-red-500">❌ Absent: <b>{absent}</b></span>
+            </div>
+            {overallPercentage !== null && overallPercentage < 75 && (
+              <p className="text-xs text-red-500 mt-2">
+                ⚠️ Minimum required attendance is 75%. You need {Math.ceil((0.75 * totalClasses - present) / 0.25)} more classes.
+              </p>
+            )}
           </div>
         </div>
-        {/* Summary */}
-        <div>
-          <p className="text-xl font-bold text-gray-800">{studentName}</p>
-          <p className="text-lg font-semibold mt-1" style={{ color: statusColor }}>{statusText}</p>
-          <div className="flex gap-6 mt-3 text-sm text-gray-600">
-            <span>📅 Total Classes: <b>{totalClasses}</b></span>
-            <span className="text-green-600">✅ Present: <b>{present}</b></span>
-            <span className="text-red-500">❌ Absent: <b>{absent}</b></span>
-          </div>
-          {overallPercentage !== null && overallPercentage < 75 && (
-            <p className="text-xs text-red-500 mt-2">
-              ⚠️ Minimum required attendance is 75%. You need {Math.ceil((0.75 * totalClasses - present) / 0.25)} more classes.
-            </p>
-          )}
-        </div>
-      </div>
+      )}
 
       {/* Per-subject table */}
       {perSubject?.length > 0 && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-4 border-b border-gray-50">
-            <h2 className="font-bold text-gray-800">Subject-wise Breakdown</h2>
-          </div>
-          <Table
-            dataSource={perSubject}
-            columns={columns}
-            rowKey="subject"
-            pagination={false}
-            size="middle"
-          />
+          <div className="p-4 border-b border-gray-50"><h2 className="font-bold text-gray-800">Subject-wise Breakdown</h2></div>
+          <Table dataSource={perSubject} columns={columns} rowKey="subject" pagination={false} size="middle" />
         </div>
       )}
     </div>
@@ -140,155 +146,207 @@ function StudentAttendanceView() {
 
 // ─── Teacher / Admin / HOD View ───────────────────────────────────────────────
 function TeacherAttendanceView() {
-  const [form] = Form.useForm();
-  const [courses, setCourses]   = useState([]);
-  const [subjects, setSubjects] = useState([]);
-  const [students, setStudents] = useState([]);
-  const [attendanceRecords, setAttendanceRecords] = useState({});
-  const [loading, setLoading]   = useState(false);
-  const [saving, setSaving]     = useState(false);
+  const [schedules, setSchedules] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => { fetchDropdowns(); }, []);
+  // Active Session State
+  const [sessionModalOpen, setSessionModalOpen] = useState(false);
+  const [activeSession, setActiveSession] = useState(null); // { token, expiresAt, total, present }
+  const [activeCourseId, setActiveCourseId] = useState(null);
+  const [activeSubjectId, setActiveSubjectId] = useState(null);
+  const [activeRoster, setActiveRoster] = useState([]);
+  const [isInitializing, setIsInitializing] = useState(false);
 
-  const fetchDropdowns = async () => {
+  const pollIntervalRef = useRef(null);
+
+  useEffect(() => {
+    fetchTodayClasses();
+    return () => stopPolling();
+  }, []);
+
+  const fetchTodayClasses = async () => {
     try {
-      const [coursesRes, subjectsRes, studentsRes] = await Promise.all([
-        api.get('/management/courses'),
-        api.get('/management/subjects'),
-        api.get('/students'),
-      ]);
-      setCourses(coursesRes.data);
-      setSubjects(subjectsRes.data);
-      const allStudents = studentsRes.data?.data || studentsRes.data;
-      setStudents(allStudents.filter(s => s.status === 'Active'));
-    } catch {
-      message.error('Failed to load initial data');
-    }
-  };
-
-  const handleFetchAttendance = async () => {
-    try {
-      const values = await form.validateFields();
       setLoading(true);
-      const dateStr = values.date.format('YYYY-MM-DD');
-      const res = await api.get('/attendance', {
-        params: { courseId: values.courseId, subjectId: values.subjectId, date: dateStr },
-      });
-      const existingData = res.data.data;
-      if (existingData?.records) {
-        const dict = {};
-        existingData.records.forEach(r => {
-          const id = typeof r.studentId === 'object' ? r.studentId._id : r.studentId;
-          dict[id] = r.status === 'Present';
-        });
-        setAttendanceRecords(dict);
-        message.success('Loaded existing attendance for this date.');
-      } else {
-        const dict = {};
-        students.forEach(s => { dict[s._id] = true; });
-        setAttendanceRecords(dict);
-        message.info('No records found. All marked Present by default.');
-      }
+      const res = await api.get('/attendance/today');
+      setSchedules(res.data.data);
     } catch {
-      message.error('Failed to fetch attendance records');
+      message.error("Failed to load today's scheduled classes.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSaveAttendance = async () => {
+  const startPolling = (cId, sId) => {
+    stopPolling();
+    pollIntervalRef.current = setInterval(async () => {
+       try {
+         const res = await api.get('/attendance/session/active', { params: { courseId: cId, subjectId: sId }});
+         if (res.data.success && res.data.data) {
+             setActiveRoster(res.data.data.records);
+         }
+       } catch (err) {}
+    }, 3000); // Poll every 3s
+  };
+
+  const stopPolling = () => {
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+  };
+
+  const handleStartSession = async (courseId, subjectId) => {
     try {
-      const values = await form.validateFields();
-      setSaving(true);
-      const dateStr = values.date.format('YYYY-MM-DD');
-      const recordsToSave = students.map(s => ({
-        studentId: s._id,
-        status: attendanceRecords[s._id] ? 'Present' : 'Absent',
-      }));
-      await api.post('/attendance', {
-        courseId:  values.courseId,
-        subjectId: values.subjectId,
-        date:      dateStr,
-        records:   recordsToSave,
-      });
-      message.success('Attendance saved successfully!');
+      setIsInitializing(true);
+      setSessionModalOpen(true);
+      setActiveCourseId(courseId);
+      setActiveSubjectId(subjectId);
+      
+      const res = await api.post('/attendance/session/start', { courseId, subjectId });
+      setActiveSession({ token: res.data.token, expiresAt: res.data.expiresAt });
+      
+      // Force immediate fetch of roster to show initial state
+      const initialRosterRes = await api.get('/attendance/session/active', { params: { courseId, subjectId }});
+      if (initialRosterRes.data.data) setActiveRoster(initialRosterRes.data.data.records);
+
+      startPolling(courseId, subjectId);
     } catch (err) {
-      if (err?.response?.data?.message) {
-        message.error(err.response.data.message); // Show ownership error
-      } else {
-        message.error('Failed to save attendance');
-      }
+      setSessionModalOpen(false);
+      message.error("Failed to start session.");
     } finally {
-      setSaving(false);
+      setIsInitializing(false);
     }
   };
 
-  const columns = [
-    { title: 'Student Name', dataIndex: 'name', key: 'name' },
-    { title: 'Department',   dataIndex: 'department', key: 'department' },
-    {
-      title: 'Status',
-      key: 'status',
-      width: 160,
-      render: (_, record) => {
-        const isPresent = attendanceRecords[record._id] ?? true;
-        return (
-          <Switch
-            checkedChildren="Present"
-            unCheckedChildren="Absent"
-            checked={isPresent}
-            onChange={(v) => setAttendanceRecords(p => ({ ...p, [record._id]: v }))}
-          />
-        );
-      },
-    },
+  // Allow manual toggling in the modal
+  const handleManualToggle = async (studentId, status) => {
+     try {
+       // Optimistic UI update
+       const nextRoster = activeRoster.map(r => r.studentId._id === studentId ? { ...r, status: status ? 'Present' : 'Absent' } : r);
+       setActiveRoster(nextRoster);
+
+       // We technically need to send it to the manual mark API.
+       // Since the new logic is session based, we can just save it via the old POST endpoint
+       const recordsToSave = nextRoster.map(r => ({ studentId: r.studentId._id, status: r.status }));
+       await api.post('/attendance', {
+          courseId: activeCourseId,
+          subjectId: activeSubjectId,
+          date: new Date().toISOString(),
+          records: recordsToSave
+       });
+     } catch (err) {
+        message.error("Failed to manual toggle.");
+     }
+  };
+
+  const closeSession = () => {
+     setSessionModalOpen(false);
+     stopPolling();
+     setActiveSession(null);
+     setActiveRoster([]);
+  };
+
+  const rosterColumns = [
+    { title: 'Student', render: (_, r) => <div><p className="font-semibold">{r.studentId.name}</p><p className="text-xs text-gray-500">{r.studentId.email}</p></div> },
+    { title: 'Status', render: (_, r) => (
+       <Checkbox 
+         checked={r.status === 'Present'} 
+         onChange={(e) => handleManualToggle(r.studentId._id, e.target.checked)}
+       >
+         {r.status === 'Present' ? <span className="text-green-600 font-bold">Present</span> : <span className="text-gray-400">Absent</span>}
+       </Checkbox>
+    )}
   ];
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-2">Class Attendance</h1>
-      <p className="text-gray-500 mb-6">Select a class session to load the roster and mark attendance.</p>
+      <h1 className="text-2xl font-bold mb-2">Today's Lectures</h1>
+      <p className="text-gray-500 mb-6">Select a class to generate the Attendance Code securely.</p>
 
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mb-6">
-        <Form form={form} layout="vertical" className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-          <Form.Item name="date" label="Date" rules={[{ required: true }]} initialValue={dayjs()}>
-            <DatePicker className="w-full" />
-          </Form.Item>
-          <Form.Item name="courseId" label="Course" rules={[{ required: true }]}>
-            <Select placeholder="Select Course" showSearch optionFilterProp="children">
-              {courses.map(c => <Option key={c._id} value={c._id}>{c.name}</Option>)}
-            </Select>
-          </Form.Item>
-          <Form.Item name="subjectId" label="Subject" rules={[{ required: true }]}>
-            <Select placeholder="Select Subject" showSearch optionFilterProp="children">
-              {subjects.map(s => <Option key={s._id} value={s._id}>{s.name}</Option>)}
-            </Select>
-          </Form.Item>
-          <Form.Item>
-            <Button type="primary" onClick={handleFetchAttendance} loading={loading} className="w-full">
-              Load Roster
-            </Button>
-          </Form.Item>
-        </Form>
-      </div>
-
-      {Object.keys(attendanceRecords).length > 0 && (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-bold">Roster</h3>
-            <Button type="primary" onClick={handleSaveAttendance} loading={saving}>
-              Save Attendance
-            </Button>
-          </div>
-          <Table
-            dataSource={students}
-            columns={columns}
-            rowKey="_id"
-            pagination={{ pageSize: 50 }}
-            size="middle"
-          />
+      {loading ? (
+        <div className="flex justify-center p-12"><Spin size="large" /></div>
+      ) : schedules.length === 0 ? (
+        <div className="bg-white p-12 text-center rounded-2xl shadow-sm border border-gray-100">
+           <Alert message="No classes scheduled for today!" description="Take a break or check your timetable." type="info" />
         </div>
+      ) : (
+        <Row gutter={[16, 16]}>
+          {schedules.map((item) => (
+            <Col xs={24} md={12} lg={8} key={item._id}>
+               <Card className="shadow-sm rounded-xl border border-gray-100 hover:shadow-md transition">
+                  <div className="flex justify-between items-start mb-4">
+                     <div>
+                       <h3 className="font-bold text-lg text-indigo-700">{item.subjectId?.name}</h3>
+                       <p className="text-sm text-gray-500">{item.courseId?.name}</p>
+                     </div>
+                     <div className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold">
+                       Slot {item.slot}
+                     </div>
+                  </div>
+                  <div className="space-y-2 mb-6">
+                    <p className="text-gray-600 text-sm"><ClockCircleOutlined /> {item.startTime} - {item.endTime}</p>
+                    <p className="text-gray-600 text-sm"><EnvironmentOutlined /> Room {item.roomId?.roomNumber}</p>
+                  </div>
+                  <Button type="primary" className="w-full h-10" style={{ background: '#4f46e5' }} onClick={() => handleStartSession(item.courseId._id, item.subjectId._id)}>
+                    Start Verification Session
+                  </Button>
+               </Card>
+            </Col>
+          ))}
+        </Row>
       )}
+
+      {/* Session Modal */}
+      <Modal
+        title={null}
+        open={sessionModalOpen}
+        onCancel={closeSession}
+        footer={null}
+        width={800}
+        destroyOnClose
+        className="attendance-modal"
+      >
+         <div className="flex flex-col md:flex-row gap-8 mt-4">
+           {/* Left side: Code and QR */}
+           <div className="flex-1 flex flex-col items-center justify-center bg-gray-50 rounded-2xl p-6 border border-gray-100">
+              {isInitializing ? <Spin /> : (
+                <>
+                  <Title level={4} className="!mb-6 text-gray-500">Scan to Verify Presence</Title>
+                  <div className="bg-white p-4 rounded-xl shadow-sm mb-6">
+                    {/* Generates QR from ant design directly containing the token text (or URL) */}
+                    <QRCode value={activeSession?.token || 'loading'} size={220} color="#4f46e5" />
+                  </div>
+                  <Text className="text-gray-400 mb-2">OR ENTER CODE</Text>
+                  <div className="text-5xl tracking-widest font-mono font-black text-indigo-700">
+                    {activeSession?.token}
+                  </div>
+                  {activeSession?.expiresAt && (
+                    <Text className="text-xs text-red-400 mt-4 font-semibold">
+                      Expires at {new Date(activeSession.expiresAt).toLocaleTimeString()}
+                    </Text>
+                  )}
+                </>
+              )}
+           </div>
+
+           {/* Right side: Live roster */}
+           <div className="flex-1 max-h-[500px] overflow-y-auto">
+             <div className="sticky top-0 bg-white pb-4 mb-2 border-b flex justify-between items-center z-10">
+               <Title level={4} className="!mb-0"><TeamOutlined /> Live Roster</Title>
+               <div className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm font-bold border border-green-200">
+                  {activeRoster.filter(r => r.status === 'Present').length} / {activeRoster.length}
+               </div>
+             </div>
+             
+             <Table 
+               dataSource={activeRoster} 
+               columns={rosterColumns} 
+               rowKey={r => r.studentId._id}
+               pagination={false}
+               size="small"
+               showHeader={false}
+             />
+           </div>
+         </div>
+      </Modal>
+
     </div>
   );
 }
@@ -296,7 +354,6 @@ function TeacherAttendanceView() {
 // ─── Main export ──────────────────────────────────────────────────────────────
 export default function Attendance() {
   const { user } = useAuth();
-
   if (user?.role === 'student') return <StudentAttendanceView />;
   return <TeacherAttendanceView />;
 }

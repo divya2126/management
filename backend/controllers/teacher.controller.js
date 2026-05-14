@@ -1,6 +1,19 @@
 const Teacher = require('../model/Teacher.model');
 const RegisterModel = require('../model/Register.model');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const { sendWelcomeEmail } = require('../services/email.service');
+
+// Generate a secure random temporary password
+const generateTempPassword = () => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789@#!';
+  let password = '';
+  const bytes = crypto.randomBytes(10);
+  for (let i = 0; i < 10; i++) {
+    password += chars[bytes[i] % chars.length];
+  }
+  return password;
+};
 
 // Get all teachers
 const getTeachers = async (req, res) => {
@@ -12,11 +25,11 @@ const getTeachers = async (req, res) => {
   }
 };
 
-// Create a new teacher API
+// Create a new teacher — auto-provision login + send welcome email
 const createTeacher = async (req, res) => {
   try {
     const { name, department, email, status, profilePhoto, role } = req.body;
-    
+
     // Check if teacher exists in Teacher Collection
     const existing = await Teacher.findOne({ email });
     if (existing) {
@@ -29,21 +42,30 @@ const createTeacher = async (req, res) => {
       return res.status(400).json({ message: "A login account with this email already exists" });
     }
 
-    // Hash Default Password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash("Teacher@123", salt);
+    // Generate random temporary password
+    const tempPassword = generateTempPassword();
 
-    // Auto-Provision the Login User (so they don't have to touch MongoDB)
+    // Hash it
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(tempPassword, salt);
+
+    // Auto-Provision the Login User
     await RegisterModel.create({
       name,
       email,
       password: hashedPassword,
-      role: role || "teacher", // Can be teacher or hod
+      role: role || "teacher",
+      mustChangePassword: true, // Force password change on first login
     });
 
     // Save the Teacher Metadata
     const teacher = await Teacher.create({ name, department, email, status, profilePhoto });
-    
+
+    // Send welcome email with credentials (non-blocking)
+    sendWelcomeEmail(name, email, tempPassword, role || "teacher").catch((err) => {
+      console.error("Failed to send welcome email:", err.message);
+    });
+
     res.status(201).json(teacher);
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -3,6 +3,8 @@ const Timetable  = require("../model/Timetable.model");
 const Teacher    = require("../model/Teacher.model");
 const Student    = require("../model/Student.model");
 const RegisterModel = require("../model/Register.model");
+const crypto = require("crypto");
+const dayjs = require("dayjs");
 
 // ─── GET /api/attendance ──────────────────────────────────────────────────────
 exports.getAttendance = async (req, res) => {
@@ -164,5 +166,157 @@ exports.markAttendance = async (req, res) => {
   } catch (error) {
     console.error("Mark Attendance Error:", error);
     res.status(500).json({ success: false, message: "Failed to save attendance" });
+  }
+};
+
+// ─── GET /api/attendance/today (For Teachers) ─────────────────────────────────
+exports.getScheduledClassesToday = async (req, res) => {
+  try {
+    const regUser = await RegisterModel.findById(req.user.id).select("email").lean();
+    if (!regUser) return res.status(404).json({ success: false, message: "User not found" });
+
+    const teacher = await Teacher.findOne({ email: regUser.email }).select("_id").lean();
+    if (!teacher && req.user.role !== 'admin' && req.user.role !== 'hod') {
+      return res.status(404).json({ success: false, message: "Teacher profile not found" });
+    }
+
+    const todayDayName = dayjs().format("dddd"); // e.g. "Monday"
+    
+    let query = { dayOfWeek: todayDayName };
+    if (teacher) query.teacherId = teacher._id;
+
+    const schedules = await Timetable.find(query)
+      .populate("courseId", "name code")
+      .populate("subjectId", "name code")
+      .populate("roomId", "roomNumber")
+      .sort({ slot: 1 })
+      .lean();
+
+    res.status(200).json({ success: true, data: schedules });
+  } catch (error) {
+    console.error("Get Scheduled Classes Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// ─── POST /api/attendance/session/start ───────────────────────────────────────
+exports.startSession = async (req, res) => {
+  try {
+    const { courseId, subjectId } = req.body;
+    if (!courseId || !subjectId) return res.status(400).json({ success: false, message: "courseId and subjectId are required" });
+
+    const regUser = await RegisterModel.findById(req.user.id).select("email").lean();
+    const teacher = await Teacher.findOne({ email: regUser?.email }).select("_id").lean();
+    const teacherIdToSave = teacher ? teacher._id : req.user.id;
+
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+
+    // Generate 6-digit alphanumeric token
+    const token = crypto.randomBytes(3).toString("hex").toUpperCase();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
+    let attendance = await Attendance.findOne({
+      courseId,
+      subjectId,
+      date: todayDate,
+    });
+
+    if (!attendance) {
+      // Find all students for this course to initialize records
+      const allStudentsInCourse = await Student.find({ status: "Active" }); // Ideally filter by department/course if available in Student model
+      const records = allStudentsInCourse.map(s => ({ studentId: s._id, status: "Absent" }));
+
+      attendance = new Attendance({
+        courseId,
+        subjectId,
+        teacherId: teacherIdToSave,
+        date: todayDate,
+        records,
+      });
+    }
+
+    attendance.activeToken = token;
+    attendance.tokenExpiresAt = expiresAt;
+    await attendance.save();
+
+    res.status(200).json({ success: true, token, expiresAt });
+  } catch (error) {
+    console.error("Start Session Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// ─── GET /api/attendance/session/active ───────────────────────────────────────
+exports.getActiveSession = async (req, res) => {
+  try {
+    const { courseId, subjectId } = req.query;
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+
+    const attendance = await Attendance.findOne({
+      courseId, subjectId, date: todayDate
+    }).populate("records.studentId", "name email");
+
+    if (!attendance || !attendance.activeToken || attendance.tokenExpiresAt < new Date()) {
+      return res.status(200).json({ success: true, active: false, data: attendance });
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      active: true, 
+      token: attendance.activeToken, 
+      expiresAt: attendance.tokenExpiresAt,
+      data: attendance 
+    });
+  } catch (error) {
+    console.error("Get Active Session Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// ─── POST /api/attendance/session/verify ──────────────────────────────────────
+exports.verifySession = async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ success: false, message: "Token is required" });
+
+    const attendance = await Attendance.findOne({ activeToken: token.toUpperCase() });
+    if (!attendance) {
+      return res.status(404).json({ success: false, message: "Invalid or expired code" });
+    }
+
+    if (attendance.tokenExpiresAt < new Date()) {
+      return res.status(400).json({ success: false, message: "This attendance session has expired" });
+    }
+
+    // Identify student
+    const regUser = await RegisterModel.findById(req.user.id).select("email").lean();
+    if (!regUser) return res.status(404).json({ success: false, message: "User not found" });
+
+    const studentProfile = await Student.findOne({ email: regUser.email }).select("_id").lean();
+    if (!studentProfile) {
+      return res.status(404).json({ success: false, message: "Student profile not found" });
+    }
+
+    // Find student in records
+    const recordIndex = attendance.records.findIndex(r => r.studentId.toString() === studentProfile._id.toString());
+    
+    if (recordIndex > -1) {
+      if (attendance.records[recordIndex].status === "Present") {
+         return res.status(200).json({ success: true, message: "You have already marked your attendance" });
+      }
+      attendance.records[recordIndex].status = "Present";
+    } else {
+      // If student was not in the initial records list, add them (edge case)
+      attendance.records.push({ studentId: studentProfile._id, status: "Present" });
+    }
+
+    await attendance.save();
+
+    res.status(200).json({ success: true, message: "Attendance marked successfully!" });
+  } catch (error) {
+    console.error("Verify Session Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
   }
 };

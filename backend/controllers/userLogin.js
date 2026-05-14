@@ -1,4 +1,5 @@
 const { loginService } = require("../services/auth.service");
+
 const userLogin = async (req, res) => {
   try {
     const result = await loginService(req.body);
@@ -6,9 +7,11 @@ const userLogin = async (req, res) => {
       message: "Login successful",
       user: result.user,
       token: result.token,
+      mustChangePassword: result.mustChangePassword,
     });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
+
 module.exports = userLogin;

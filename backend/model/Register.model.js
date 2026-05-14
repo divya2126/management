@@ -34,6 +34,13 @@ const registerSchema = new mongoose.Schema({
     enum: ["local", "google"],
     default: "local"
   },
+
+  mustChangePassword: {
+    type: Boolean,
+    default: false,
+  },
+  resetPasswordToken: String,
+  resetPasswordExpire: Date,
 });
 
 // ✅ Explicit index on email (used on every login)

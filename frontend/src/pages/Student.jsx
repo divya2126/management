@@ -1,6 +1,7 @@
 import { Button, Input, Table, Tag, Modal, Form, Select, message, Space, Popconfirm } from "antd";
 import { SearchOutlined, PlusOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import api from "../services/api";
 
 const { Option } = Select;
@@ -8,12 +9,19 @@ const { Option } = Select;
 export default function Student() {
   const [isModalOpen, setIsModalOpen]   = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
-  const [searchText, setSearchText]     = useState("");
+  const location                        = useLocation();
+  const [searchText, setSearchText]     = useState(location.state?.searchQuery || "");
   const [students, setStudents]         = useState([]);
   const [loading, setLoading]           = useState(false);
   const [form]                          = Form.useForm();
 
   useEffect(() => { fetchStudents(); }, []);
+
+  useEffect(() => {
+    if (location.state?.searchQuery) {
+      setSearchText(location.state.searchQuery);
+    }
+  }, [location.state]);
 
   const fetchStudents = async () => {
     try {
@@ -119,6 +127,7 @@ export default function Student() {
           prefix={<SearchOutlined />}
           placeholder="Search Students..."
           style={{ width: "250px" }}
+          value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
         />
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>

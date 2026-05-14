@@ -38,7 +38,10 @@ export default function Timetable() {
   const [editingEntry, setEditingEntry] = useState(null); // null = create, object = edit
   const [conflictError, setConflictError] = useState(null);
   const [saving, setSaving]           = useState(false);
+  const [generating, setGenerating]   = useState(false);
+  const [isGenModalOpen, setIsGenModalOpen] = useState(false);
   const [form]                        = Form.useForm();
+  const [genForm]                     = Form.useForm();
 
   // Dropdowns
   const [courses, setCourses]         = useState([]);
@@ -208,6 +211,28 @@ export default function Timetable() {
     }
   };
 
+// ── Generator ──────────────────────────────────────────────────────────────────
+  const openGenerateModal = () => {
+    genForm.resetFields();
+    setIsGenModalOpen(true);
+  };
+
+  const handleGenerate = async () => {
+    try {
+      const values = await genForm.validateFields();
+      setGenerating(true);
+      const res = await api.post("/timetable/generate", values);
+      message.success(`Generated ${res.data.generatedCount} timetable entries!`);
+      setIsGenModalOpen(false);
+      fetchTimetable();
+    } catch (err) {
+      if (err?.errorFields) return;
+      message.error(err?.response?.data?.message || "Failed to generate timetable");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   // ── Delete ─────────────────────────────────────────────────────────────────
   const handleDelete = async (id) => {
     try {
@@ -336,9 +361,14 @@ export default function Timetable() {
             Export PDF
           </Button>
           {canManage && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={openCreate} style={{ background: "#4f46e5" }}>
-              Add Schedule
-            </Button>
+            <>
+              <Button onClick={openGenerateModal} style={{ borderColor: "#4f46e5", color: "#4f46e5" }}>
+                Auto-Generate
+              </Button>
+              <Button type="primary" icon={<PlusOutlined />} onClick={openCreate} style={{ background: "#4f46e5" }}>
+                Add Schedule
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -490,6 +520,38 @@ export default function Timetable() {
           </div>
         </Form>
       </Modal>
+
+      {/* ── Auto Gen Modal ─────────────────────────────────────────────── */}
+      <Modal
+        title={<span className="font-bold text-lg">✨ Auto-Generate Timetable</span>}
+        open={isGenModalOpen}
+        onCancel={() => setIsGenModalOpen(false)}
+        onOk={handleGenerate}
+        confirmLoading={generating}
+        okText="Generate Now"
+        okButtonProps={{ style: { background: "#4f46e5" } }}
+      >
+        <Alert
+          message="Overwrite Warning"
+          description="This will clear existing schedule items for the selected course and semester before generating new ones."
+          type="warning"
+          showIcon
+          className="mb-4"
+        />
+        <Form form={genForm} layout="vertical">
+          <Form.Item name="courseId" label="Course" rules={[{ required: true }]}>
+            <Select placeholder="Select Course" showSearch optionFilterProp="children">
+               {courses.map((c) => <Option key={c._id} value={c._id}>{c.name}</Option>)}
+            </Select>
+          </Form.Item>
+          <Form.Item name="semester" label="Semester" rules={[{ required: true }]}>
+            <Select placeholder="Select Semester">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map(s => <Option key={s} value={s}>Semester {s}</Option>)}
+            </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
+
     </div>
   );
 }

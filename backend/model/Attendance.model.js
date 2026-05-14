@@ -35,6 +35,13 @@ const attendanceSchema = new mongoose.Schema(
         },
       },
     ],
+    activeToken: {
+      type: String,
+      default: null,
+    },
+    tokenExpiresAt: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );

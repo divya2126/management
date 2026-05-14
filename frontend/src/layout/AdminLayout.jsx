@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Sidebar from "../components/layout/Sidebar";
 import Topbar from "../components/layout/Topbar";
+import AIAssistant from "../components/AIAssistant";
 import { io } from "socket.io-client";
 import { useAuth } from "../context/AuthContext";
 
@@ -17,8 +18,10 @@ export default function AdminLayout() {
     if (!user) return;
 
     // Connect to Backend WebSocket
+    const token = localStorage.getItem("token");
     const socket = io("http://localhost:5001", {
       withCredentials: true,
+      auth: { token },
     });
 
     socket.on("connect", () => {
@@ -65,6 +68,9 @@ export default function AdminLayout() {
         </Content>
 
       </Layout>
+
+      {/* Global AI Assistant Widget */}
+      <AIAssistant />
 
     </Layout>
   );

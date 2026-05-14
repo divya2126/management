@@ -48,7 +48,7 @@ const FeaturesSection = () => {
       <div className="absolute -bottom-8 left-20 w-96 h-96 bg-emerald-200 rounded-full mix-blend-multiply blur-3xl opacity-50 md:opacity-30"></div>
 
       <div className="max-w-7xl mx-auto text-center space-y-6 relative z-10">
-        
+
         {/* Heading */}
         <div className="inline-flex items-center justify-center px-4 py-1.5 mb-2 rounded-full bg-teal-50 border border-teal-200 shadow-sm">
           <p className="text-teal-700 text-sm tracking-widest font-semibold uppercase">

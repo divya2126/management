@@ -92,7 +92,28 @@ const loginService = async (data) => {
 
   const token = signToken(user);
 
-  return { user: sanitizeUser(user), token }; // ✅ Password stripped
+  return {
+    user: sanitizeUser(user),
+    token,
+    mustChangePassword: user.mustChangePassword || false,
+  };
 };
 
-module.exports = { registerService, loginService };
+// ─── Change Password ──────────────────────────────────────────────────────────
+const changePasswordService = async (userId, newPassword) => {
+  if (!newPassword || newPassword.length < 8) {
+    throw new Error("Password must be at least 8 characters");
+  }
+
+  const salt = await bcrypt.genSalt(12);
+  const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+  await RegisterModel.findByIdAndUpdate(userId, {
+    password: hashedPassword,
+    mustChangePassword: false,
+  });
+
+  return { message: "Password changed successfully" };
+};
+
+module.exports = { registerService, loginService, changePasswordService };

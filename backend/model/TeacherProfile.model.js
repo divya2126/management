@@ -4,7 +4,7 @@ const TeacherProfileSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Register", // Links to the main user account (RegisterModel)
+      ref: "RegisterModel", // Links to the main user account (RegisterModel)
       required: true,
       unique: true,
     },

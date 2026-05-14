@@ -7,12 +7,14 @@ import {
   BookOutlined,
   CheckSquareOutlined,
   ProfileOutlined,
+  FileDoneOutlined,
   SettingOutlined,
   AppstoreOutlined,
   BellOutlined,
 } from "@ant-design/icons";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { CalendarDays } from "lucide-react";
 
 
 const { Sider } = Layout;
@@ -36,6 +38,8 @@ export default function Sidebar({ collapsed }) {
     { key: "/leave-requests", icon: <UserOutlined />, label: <Link to="/leave-requests">Leave Approvals</Link> },
     { key: "/send-notification", icon: <BellOutlined />, label: <Link to="/send-notification">Send Notice</Link> },
     { key: "/timetable", icon: <CalendarOutlined />, label: <Link to="/timetable">Timetable</Link> },
+    { key: "/exams", icon: <ProfileOutlined />, label: <Link to="/exams">Exams</Link> },
+    { key: "/manage-results", icon: <FileDoneOutlined />, label: <Link to="/manage-results">Manage Results</Link> },
     { key: "/settings", icon: <SettingOutlined />, label: <Link to="/settings">Settings</Link> },
   ];
 
@@ -50,6 +54,7 @@ export default function Sidebar({ collapsed }) {
     { key: "/leave-requests", icon: <UserOutlined />, label: <Link to="/leave-requests">Leave Approvals</Link> },
     { key: "/send-notification", icon: <BellOutlined />, label: <Link to="/send-notification">Send Notice</Link> },
     { key: "/exams", icon: <ProfileOutlined />, label: <Link to="/exams">Exams</Link> },
+    { key: "/manage-results", icon: <FileDoneOutlined />, label: <Link to="/manage-results">Manage Results</Link> },
     { key: "/timetable", icon: <CalendarOutlined />, label: <Link to="/timetable">Manage Timetable</Link> },
   ];
 
@@ -59,6 +64,7 @@ export default function Sidebar({ collapsed }) {
     { key: "/timetable", icon: <CalendarOutlined />, label: <Link to="/timetable">My Timetable</Link> },
     { key: "/attendance", icon: <CheckSquareOutlined />, label: <Link to="/attendance">Mark Attendance</Link> },
     { key: "/leave-requests", icon: <UserOutlined />, label: <Link to="/leave-requests">Request Leave</Link> },
+    { key: "/manage-results", icon: <FileDoneOutlined />, label: <Link to="/manage-results">Manage Results</Link> },
     { key: "/send-notification", icon: <BellOutlined />, label: <Link to="/send-notification">Send Notification</Link> },
   ];
 
@@ -67,6 +73,7 @@ export default function Sidebar({ collapsed }) {
     { key: "/dashboard", icon: <DashboardOutlined />, label: <Link to="/dashboard">Dashboard</Link> },
     { key: "/timetable", icon: <CalendarOutlined />, label: <Link to="/timetable">My Timetable</Link> },
     { key: "/attendance", icon: <CheckSquareOutlined />, label: <Link to="/attendance">My Attendance</Link> },
+    { key: "/my-results", icon: <FileDoneOutlined />, label: <Link to="/my-results">My Results</Link> },
     { key: "/notifications", icon: <BellOutlined />, label: <Link to="/notifications">Notifications</Link> },
   ];
 
@@ -82,22 +89,25 @@ export default function Sidebar({ collapsed }) {
       collapsible
       collapsed={collapsed}
       width={230}
-      style={{ background: "#1e3a8a" }}
-      className="min-h-screen shadow-lg"
+      style={{ background: "#1e4a6a" }}
+      className="min-h-screen shadow-xl"
       trigger={null}
     >
-<div className="p-4 border-b border-white/10 flex items-center justify-center">
-  {!collapsed ? (
-    <div className="flex items-center">
-      
-      <h1 className="text-white font-bold text-xl ml-2">
-        Schedulify
-      </h1>
-    </div>
-  ) : (
-    <span className="text-white font-bold text-lg">SF</span>
-  )}
-</div>
+      <div className="p-4 border-b border-white/10 flex items-center justify-center bg-white/5 backdrop-blur-sm">
+        {!collapsed ? (
+        <div className="flex items-center gap-1.5">
+            <CalendarDays className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+            <span
+              className="font-bold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-200 leading-none"
+              style={{ fontSize: "13px" }}
+            >
+              Schedulify
+            </span>
+          </div>
+        ) : (
+          <CalendarDays className="w-5 h-5 text-cyan-400" />
+        )}
+      </div>
       <Menu
         theme="dark"
         mode="inline"
